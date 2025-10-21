@@ -27,7 +27,11 @@ export const baseManifest = {
 
 export const baseBuildOptions: BuildOptions = {
   sourcemap: isDev,
-  emptyOutDir: !isDev
+  emptyOutDir: !isDev,
+  rollupOptions: {
+    input: {app:resolve("./src/pages/", "main", "index.html")},
+    output: {entryFileNames: (chunk)=>`src/pages/${chunk.name}/index.js`}
+  }
 }
 
 export default defineConfig({
