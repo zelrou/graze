@@ -1,5 +1,50 @@
-@import "tailwindcss";
+@import "tailwindcss" important;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.your-class {
-    color: aliceblue;
+.root_max {
+    position: fixed;
+    margin: 10% 25%;
+    width: 50%;
+    height: 80%;
 }
+
+#root {
+    font-family: monospace;
+}
+
+
+#root span {
+    font-weight: normal;
+    @apply text-base text-inherit;
+}
+
+/*
+#root progress {
+  border-radius: 7px;
+  width: 80%;
+  height: 22px;
+  margin-left: -11.5%;
+  box-shadow: 1px 1px 4px rgba( 0, 0, 0, 0.2 );
+}
+#root progress::-webkit-progress-bar {
+  background-color: yellow;
+  border-radius: 7px;
+}
+*/
+#root progress::-moz-progress-bar {}
+#root progress::-webkit-progress-value {
+    background-color: orange;
+    /*
+    border-radius: 7px;
+    box-shadow: 1px 1px 5px 3px rgba( 255, 0, 0, 0.8 );
+    */
+}
+
+#root progress::-moz-progress-value{
+  /* style rules */
+}
+
+
+
