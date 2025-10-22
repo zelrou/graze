@@ -5,14 +5,22 @@ import {
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
 
+const getParagraphs = () => {
+    let _paragraphs = Array.from(document.getElementsByTagName('p'))
+    if (_paragraphs.length > 0) {
+        _paragraphs = _paragraphs.map((el)=>{
+            return el.innerText
+        });
+    } else {
+        _paragraphs = [[]]
+    }
+    return _paragraphs
+}
+
 function splitWords(p) {
     if (!p || !p.length) return 0;
     return p.split(' ')
 };
-
-
-
-
 
 
 const subscribeStorage = callback => {
@@ -32,9 +40,9 @@ const syncStorageState = (changes, other) => {
     //setMarkLatestCIdx(cIdx)
 }
 
-export default function App() {
+export default function Reader({_paragraphs}) {
     const [isInitialized, setIsInitialized] = useState(false);
-    const [isClosed, setIsClosed] = useState(true);
+    const [isClosed, setIsClosed] = useState(false);
     const [isMinimized, setIsMinimized] = useState(true);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
@@ -46,7 +54,6 @@ export default function App() {
 
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
-
     const paragraphsLength = _paragraphs.length
     const paragraphLength = _paragraphs[paragraphIndex].length
 
@@ -242,7 +249,7 @@ export default function App() {
     }
 
     /* ========== STORAGE FUNCS =========== */
-    const storageChange = useSyncExternalStore(subscribeStorage, syncStorageState);
+    //const storageChange = useSyncExternalStore(subscribeStorage, syncStorageState);
     const locationHref = window.location.href;
 
     const setStorageBookmarkLatest = async () => {
@@ -291,8 +298,7 @@ export default function App() {
     initializeStorage();
 
     /* ========== MAIN TEXT ========= */
-    const mainText =  _paragraphs[paragraphIndex]
-        .slice(charIndex, charIndex + charInterval)
+    const mainText =  _paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
     const classesMainText = [
         'font-[Georgia] text-2xl indent-0 text-left md:px-20',
         'text-balanced whitespace-normal break-normal'

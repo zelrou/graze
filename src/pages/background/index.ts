@@ -1,11 +1,18 @@
 console.log('background script loaded');
-console.log(browser);
-
-
+browser.runtime.onMessage.addListener((message) => {
+    console.log(message);
+//  browser.notifications.create({
+//    type: "basic",
+//    title: "Message from the page",
+//    message: message.content,
+//  });
+});
 
 const messageTab = (tabs) => {
   browser.tabs.sendMessage(tabs[0].id, {
-    data: "Message from the extension!",
+    data: {
+        action: 'open_contentScript'
+    }
   });
 }
 
@@ -22,10 +29,10 @@ const openTabIndex = () => {
     browser.tabs.create({"url": "/src/pages/main/index.html"});
 }
 
-browser.action.onClicked.addListener((t) => {
-    console.log(t);
-    onExecuted();
-})
+// browser.action.onClicked.addListener((t) => {
+//     console.log(t);
+//     onExecuted();
+// })
 
 
 

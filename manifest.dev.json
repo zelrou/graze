@@ -1,5 +1,6 @@
 {
   "action": {
+    "default_popup": "src/pages/popup/index.html",
     "default_icon": "public/dev-icon-32.png"
   },
   "icons": {

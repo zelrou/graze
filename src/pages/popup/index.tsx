@@ -10,17 +10,8 @@ function init() {
   const root = createRoot(rootContainer);
   root.render(<Popup />);
 }
-
-//init();
-
+init();
 
 
 
-let createData = {
-//  type: "detached_panel",
-  url: "src/pages/content/main/index.html",
-  width: 250,
-  height: 100,
-};
-let creating = browser.tabs.create(createData);
 
