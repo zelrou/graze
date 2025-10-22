@@ -188,7 +188,7 @@ export default function Reader({paragraphUrl, _paragraphs}) {
         if (!isPaused){
             intervalID = setInterval(()=>{
                 setClock(clock=>clock+1)
-                console.log('interval tick',clock,'wordIdx: ' + wordIndex)
+                /*console.log('interval tick',clock,'wordIdx: ' + charIndex)*/
                 if (!isPaused) onTick();
             }, delay);
         }
@@ -323,7 +323,6 @@ export default function Reader({paragraphUrl, _paragraphs}) {
     // bg-zinc-700
     return (
         <>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         {/* ========== READER MODAL BACKGROUND ========== */}
         <div className={['fixed z-0 left-0',
             'grid',
