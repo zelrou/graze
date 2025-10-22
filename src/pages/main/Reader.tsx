@@ -40,7 +40,7 @@ const syncStorageState = (changes, other) => {
     //setMarkLatestCIdx(cIdx)
 }
 
-export default function Reader({_paragraphs}) {
+export default function Reader({paragraphUrl, _paragraphs}) {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isClosed, setIsClosed] = useState(false);
     const [isMinimized, setIsMinimized] = useState(true);
@@ -54,8 +54,8 @@ export default function Reader({_paragraphs}) {
 
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
-    const paragraphsLength = _paragraphs.length
-    const paragraphLength = _paragraphs[paragraphIndex].length
+    let paragraphsLength;
+    let paragraphLength;
 
     /* ========== BACKGROUND PAGE MESSAGING ========== */
     const bgSender = (message) => {
@@ -255,7 +255,7 @@ export default function Reader({_paragraphs}) {
     const setStorageBookmarkLatest = async () => {
         console.log('setStorageBookmarkLatest');
         const res = await browser.storage.local.set({
-            [locationHref]: { pIdx: paragraphIndex, cIdx: charIndex }
+            [paragraphUrl]: { pIdx: paragraphIndex, cIdx: charIndex }
         })
         console.log('setStorageMarkOK', res)
     }
@@ -268,8 +268,8 @@ export default function Reader({_paragraphs}) {
     const handleClickGetBookmarkLatest = async (e) => {
         e.preventDefault();
         if (!isPaused) togglePaused(true);
-        let res = await browser.storage.local.get(locationHref)
-        if (res) { res = res[locationHref]; }
+        let res = await browser.storage.local.get(paragraphUrl)
+        if (res) { res = res[paragraphUrl]; }
         console.log('handleClickGetBookmarkLatest', res);
         if (res && (res.pIdx !== paragraphIndex)) {
             setParagraphIndex(res.pIdx);
@@ -281,7 +281,7 @@ export default function Reader({_paragraphs}) {
 
     const handleClickClearBookmarks = async (e) => {
         e.preventDefault()
-        browser.storage.local.set({[locationHref]: {pIdx: 0, cIdx: 0}})
+        browser.storage.local.set({[paragraphUrl]: {pIdx: 0, cIdx: 0}})
     }
 
     /* ========== initializeStorage ========== */
@@ -289,21 +289,36 @@ export default function Reader({_paragraphs}) {
     const initializeStorage = async () => {
         if (!isStorageInitialized) {
             const storageKeys = await browser.storage.local.getKeys();
-            if (!storageKeys.includes(locationHref)) {
-                browser.storage.local.set({[locationHref]: {pIdx: 0, cIdx: 0}});
+            if (!storageKeys.includes(paragraphUrl)) {
+                browser.storage.local.set({[paragraphUrl]: {pIdx: 0, cIdx: 0}});
             }
             setIsStorageInitialized(true);
         }
     }
     initializeStorage();
 
+    /* ========== RESET LOCATION ON PROPS CHANGE ========== */
+    let mainText;
+    const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
+    if (paragraphUrl !== prevParagraphUrl) {
+        setPrevParagraphUrl(paragraphUrl);
+        setParagraphIndex(0);
+        setCharIndex(0);
+        paragraphsLength = _paragraphs.length;
+        paragraphLength = _paragraphs[0].length;
+        mainText = _paragraphs[0].slice(charIndex, charIndex + charInterval);
+        setIsMinimized(false);
+    } else {
+        paragraphsLength = _paragraphs.length;
+        paragraphLength = _paragraphs[paragraphIndex].length;
+        mainText = _paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval);
+     }
+
     /* ========== MAIN TEXT ========= */
-    const mainText =  _paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
     const classesMainText = [
         'font-[Georgia] text-2xl indent-0 text-left md:px-20',
         'text-balanced whitespace-normal break-normal'
         ].join(' ')
-
 
     // bg-zinc-700
     return (

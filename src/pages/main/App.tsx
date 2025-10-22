@@ -62,22 +62,26 @@ const getTabByUrl = async (url) => {
 }
 
 let _paragraphs = [[]];
-const sendMessageToTab = async (url) => {
-    const tab = await getTabByUrl(url);
-    console.log(tab)
-    browser.tabs
-      .sendMessage(tab.id, { greeting: "Hi from background script" })
-      .then((response) => {
-        console.log("Message from the content script:");
-        console.log(response);
-        _paragraphs = response._paragraphs;
-      })
-      .catch(onError);
-}
+
+
 
 export default function App () {
     const [tabsUrls, setTabsUrls] = useState([])
+    const [paragraphUrl, setTabUrl] = useState('')
 
+    const sendMessageToTab = async (url) => {
+        const tab = await getTabByUrl(url);
+        console.log(tab)
+        browser.tabs
+          .sendMessage(tab.id, { greeting: "Hi from background script" })
+          .then((response) => {
+            console.log("Message from the content script:");
+            console.log(response);
+            _paragraphs = response._paragraphs;
+            setTabUrl(url)
+          })
+          .catch(onError);
+    }
 
     const tabs = getTabs();
     tabs.then(tabs=>setTabsUrls(tabs.map(t=>t.url)))
@@ -92,6 +96,6 @@ export default function App () {
     return (<div className='flex flex-col text-white w-screen h-screen bg-black'>
         <h1>Graze</h1>
         <div><ol>{urlList}</ol></div>
-        <Reader _paragraphs={_paragraphs} />
+        <Reader paragraphUrl={paragraphUrl} _paragraphs={_paragraphs} />
     </div>)
 }
