@@ -32,9 +32,7 @@ function getTabText(url) {
         console.log('nope')
     }
 }
-
-exportFunction(getTabText, window, { defineAs: "getTabText" });
-console.log(window);
+exportFunction(()=>getTabText, window, { defineAs: "getTabText" });
 */
 
 let _paragraphs = Array.from(document.getElementsByTagName('p')).map((el)=>{
