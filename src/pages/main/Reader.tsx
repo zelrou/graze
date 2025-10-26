@@ -345,7 +345,7 @@ export default function Reader({paragraphUrl, _paragraphs}) {
                     </div>
                 </div>
 
-                <div className={'w-full flex flex-row text-sm'}>
+                <div className={`${isMinimized && 'hidden'} w-full flex flex-row text-sm`}>
                     <button className='grow border p-1 hover:bg-yellow-500'
                         onClick={handleClickClearBookmarks} >
                         Clear Latest</button>
