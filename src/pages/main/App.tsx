@@ -186,6 +186,32 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
             </tr>) })
 }
 
+/* ========== PREV TAB LIST ========== */
+const PrevUrlList = ({tabs, latestMarks}) => {
+    const tabUrlList = tabs.map(t=>t.url)
+    console.log('PrevUrlList') //,'latestMarks', latestMarks)
+    const prevTabs = []
+    if (Object.keys(latestMarks).length) {
+        for (let [url, urlData] of Object.entries(latestMarks)) {
+            if (!tabUrlList.includes(url)) {
+                if ((urlData.hasOwnProperty('pIdx') && urlData.pIdx > 0)
+                    || (urlData.hasOwnProperty('cIdx') && urlData.cIdx > 0) ) {
+                        prevTabs.push({url, ...urlData})
+                }
+            }
+        }
+    }
+    return prevTabs.length && prevTabs.map(pt => {
+        return Object.keys(latestMarks).length && (
+            <tr key={pt.url}>
+                <td>{pt.url}</td>
+                <td>{pt.pIdx}, {pt.cIdx}</td>
+                <td><button className='border'
+                    onClick={() => null}>
+                    read</button></td>
+            </tr>) })
+}
+
 export default function App () {
     console.log('App didMount')
     const tabs = useTabStore();
@@ -225,6 +251,17 @@ export default function App () {
             </tr></thead>
             <tbody>
                 <UrlList tabs={ tabs } setReaderUrl={ setReaderUrl } latestMarks={ localStorage } />
+            </tbody>
+        </table>
+        <h2>Previous Tabs</h2>
+        <table className='table-auto md:w-5/10'>
+            <thead><tr>
+                <th>Url</th>
+                <th>Location</th>
+                <th>Read</th>
+            </tr></thead>
+            <tbody>
+                <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
             </tbody>
         </table>
         <Reader paragraphUrl={ readerUrl } _paragraphs={ _paragraphs } />
