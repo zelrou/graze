@@ -25,7 +25,6 @@ const syncStorageState = (changes, other) => {
 
 export default function Reader({paragraphUrl, _paragraphs}) {
     const [isInitialized, setIsInitialized] = useState(false);
-    const [isClosed, setIsClosed] = useState(false);
     const [isMinimized, setIsMinimized] = useState(true);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
@@ -57,11 +56,6 @@ export default function Reader({paragraphUrl, _paragraphs}) {
         browser.runtime.onMessage.addListener(bgReceiver);
         return () => browser.runtime.onMessage.removeListener(bgReceiver);
     })
-
-    const handleClickClose = () => {
-        console.log('handleClickClose', isClosed)
-        setIsClosed(true);
-    }
 
     const handleClickMinimize = () => {
         console.log('handleClickMinimize', isMinimized)
@@ -309,7 +303,6 @@ export default function Reader({paragraphUrl, _paragraphs}) {
         {/* ========== READER MODAL BACKGROUND ========== */}
         <div className={['fixed z-0 left-0',
             'grid',
-            isClosed ? 'hidden' : '',
             isMinimized ? 'bottom-0' : 'top-0',
             isMinimized ? 'bg-transparent' :'bg-[#22222266]',
             isMinimized ? 'w-xs' : 'w-screen',
@@ -331,15 +324,12 @@ export default function Reader({paragraphUrl, _paragraphs}) {
                 <div className='flex-none align-self-start justify-self-center place-items-center grid grid-cols-5'>
                     <div className='md:col-start-2 col-span-3 place-items-center'>Reader</div>
                     <div className='col-span-1 gap-4 place-items-end grid grid-cols-3 divide-x-3 divide-dashed divide-indigo-500 text-sm'>
-                        <div className=''>{!isMinimized && <button className=''>settings</button>}</div>
+                        {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
                         <div className=''>
-                            <button className='' onClick={()=>handleClickMinimize()}>
+                            <button className='border p-1'
+                                onClick={ () => (paragraphUrl.length
+                                            && handleClickMinimize()) }>
                                 {!isMinimized ? '-' : 'O'}
-                            </button>
-                        </div>
-                        <div className=''>
-                            <button className='' onClick={()=>handleClickClose()}>
-                                X
                             </button>
                         </div>
                     </div>
