@@ -155,7 +155,7 @@ const useLocalStorage = () => {
 
 /* ========== OPEN TAB LIST ========== */
 let _paragraphs = [[]];
-
+let structuredWork = {};
 const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
     const sendMessageToTab = async tabId => {
         const tabResponse = await browser.tabs.sendMessage(tabId,
@@ -163,6 +163,7 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
         console.log("Message from the content script:");
         console.log(tabResponse);
         _paragraphs = tabResponse._paragraphs;
+        structuredWork = tabResponse.structuredWork
         const targetTab = tabs.filter(t => t.id === tabId)[0]
         setReaderUrl(targetTab.url)
     }
@@ -264,7 +265,8 @@ export default function App () {
                 <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
             </tbody>
         </table>
-        <Reader paragraphUrl={ readerUrl } _paragraphs={ _paragraphs } />
+        <Reader paragraphUrl={ readerUrl } _paragraphs={ _paragraphs }
+            structuredWork={ structuredWork } />
     </div>)
 }
 

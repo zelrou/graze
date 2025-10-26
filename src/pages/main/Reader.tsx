@@ -23,7 +23,7 @@ const syncStorageState = (changes, other) => {
     //setMarkLatestCIdx(cIdx)
 }
 
-export default function Reader({paragraphUrl, _paragraphs}) {
+export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isMinimized, setIsMinimized] = useState(true);
     const [paragraphIndex, setParagraphIndex] = useState(0);
@@ -186,6 +186,9 @@ export default function Reader({paragraphUrl, _paragraphs}) {
         e.preventDefault();
         console.log(e.type, e.key, e.keyCode, e.charCode)
         switch (e.keyCode) {
+            case 27: // esc
+                handleClickMinimize();
+                break
             case 32: // space
                 handleClickPause();
                 break;
@@ -294,7 +297,8 @@ export default function Reader({paragraphUrl, _paragraphs}) {
     /* ========== MAIN TEXT ========= */
     const classesMainText = [
         'font-[Georgia] text-2xl indent-0 text-left md:px-20',
-        'text-balanced whitespace-normal break-normal'
+        'text-balanced whitespace-normal break-normal',
+        `before:content-[${charIndex===0 ? 'P'+paragraphIndex : ''}]`
         ].join(' ')
 
     // bg-zinc-700
@@ -333,6 +337,11 @@ export default function Reader({paragraphUrl, _paragraphs}) {
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <div className='flex flex-row w-full justify-around'>
+                    <h1 className='font-bold'>{structuredWork.author || '' }</h1>
+                    <h1 className='italic'>{structuredWork.title || paragraphUrl}</h1>
                 </div>
 
                 <div className={`${isMinimized && 'hidden'} w-full flex flex-row text-sm`}>
