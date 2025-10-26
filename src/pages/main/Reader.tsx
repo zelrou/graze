@@ -1,26 +1,9 @@
 import {
-    useState, useEffect, useEffectEvent, useSyncExternalStore
+    useState, useEffect, useEffectEvent
 } from 'react';
 
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
-
-const getParagraphs = () => {
-    let _paragraphs = Array.from(document.getElementsByTagName('p'))
-    if (_paragraphs.length > 0) {
-        _paragraphs = _paragraphs.map((el)=>{
-            return el.innerText
-        });
-    } else {
-        _paragraphs = [[]]
-    }
-    return _paragraphs
-}
-
-function splitWords(p) {
-    if (!p || !p.length) return 0;
-    return p.split(' ')
-};
 
 
 const subscribeStorage = callback => {

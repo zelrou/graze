@@ -136,7 +136,7 @@ const useLocalStorage = () => {
         else { return browser.storage.local.set(stateLocalStorage.concat(x)) }
     }
 
-    console.log('end:useLocalStorage', stateLocalStorage);
+    console.log('end:useLocalStorage')//, stateLocalStorage);
     return [stateLocalStorage, setLocalStorage];
 }
 
@@ -153,7 +153,7 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
         const targetTab = tabs.filter(t => t.id === tabId)[0]
         setReaderUrl(targetTab.url)
     }
-    console.log('urlList latestMarks:', latestMarks)
+    //console.log('urlList latestMarks:', latestMarks)
     return tabs.map(t => {
         const pIdx = (latestMarks.hasOwnProperty(t.url)
             && latestMarks[t.url].hasOwnProperty('pIdx'))
@@ -186,7 +186,7 @@ export default function App () {
             for (let tab of tabs) {
                 const { protocol, href } = URL.parse(tab.url);
                 const res = localStorage;
-                console.log('useLocalStorageEffect tab loop', href, res);
+                //console.log('useLocalStorageEffect tab loop', href, res);
                 if ( (!blacklistProtocol.includes(protocol))
                     && ( !res.hasOwnProperty(href)
                     || !res[href].hasOwnProperty('pIdx')
@@ -199,7 +199,7 @@ export default function App () {
     }, [tabs, localStorage, setLocalStorage])
 
 
-    console.log('App preRender:', 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
+    console.log('App preRender:')//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
     return (<div className='w-screen h-screen flex flex-col items-center bg-black text-white'>
         <h1>Graze</h1>

@@ -5,16 +5,6 @@ import {
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
 
-function splitWords(p) {
-    if (!p || !p.length) return 0;
-    return p.split(' ')
-};
-
-
-
-
-
-
 const subscribeStorage = callback => {
     if (browser.storage ) {
         // console.log(browser.storage)
