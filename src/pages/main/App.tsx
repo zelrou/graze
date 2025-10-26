@@ -1,7 +1,7 @@
 
 import Reader from '@pages/main/Reader';
 import {
-    useState, useEffect, useEffectEvent, useSyncExternalStore
+    useState, useEffect
 } from 'react';
 
 
@@ -23,16 +23,40 @@ const syncStorageState = (changes, other) => {
 }
 
 const getTabs = async (queryInfo={}) => {
-    const tabs = await browser.tabs.query(queryInfo)
+    let tabs = await browser.tabs.query(queryInfo)
+    if (tabs.length) {
+        tabs = tabs.sort((t1, t2) => (t1.id < t2.id))
+    }
     return tabs
 }
-
 
 const useTabStore = () => {
     const [tabs, setTabs] = useState([])
     const tabsIds = () => (tabs.length > 0) ? tabs.map(t=>t.id).sort() : []
     const tabsUrls = () => (tabs.length > 0) ? tabs.map(t=>t.url).sort() : []
-    console.log('useTabStore loads', tabs);
+    console.log('useTabStore loads')//, tabs);
+
+    const handleUpdated = async (tabId, changeInfo, tabInfo) => {
+        console.log('handleUpdated', tabs, tabId, changeInfo, tabInfo);
+        if ( tabInfo.status === "complete" ) {
+            const ts = await getTabs()
+            setTabs(ts);
+        }
+        /*
+        if ( tabInfo.status === "complete" ) {
+            if (!tabsIds().includes(tabId)
+               || !tabsUrls().includes(tabInfo.url) ) {
+                console.log('handleUpdated adding', tabs, tabId, changeInfo, tabInfo);
+                setTabs(tabs => tabs.concat(tabInfo))
+            }
+        }
+        */
+    }
+
+    const handleRemoved = (tabId, {windowId, isWindowClosing}) => {
+        console.log('handleRemoved', tabId, windowId, isWindowClosing)
+        setTabs(tabs=>tabs.filter(t=>t.id !== tabId))
+    }
 
     useEffect(async () => {
         console.log('useEffect runs')
@@ -49,21 +73,10 @@ const useTabStore = () => {
         }
     }, []);
 
-    const handleUpdated = (tabId, changeInfo, tabInfo) => {
-        console.log('handleUpdated', tabId, changeInfo, tabInfo);
-        if (tabInfo.status === "complete" && !tabsIds().includes(tabId) || !tabsUrls().includes(tabInfo.url)) {
-            setTabs(tabs => tabs.concat(tabInfo))
-        }
-    }
 
-    const handleRemoved = (tabId, {windowId, isWindowClosing}) => {
-        console.log('handleRemoved', tabId, windowId, isWindowClosing)
-        setTabs(tabs=>tabs.filter(t=>t.id !== tabId))
-    }
-
+    console.log('useTabStore ends')//, tabs);
     return tabs
 }
-
 
 /* ========== STORAGE FUNCS =========== */
 //const storageChange = useSyncExternalStore(subscribeStorage, syncStorageState);
@@ -154,7 +167,7 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
         setReaderUrl(targetTab.url)
     }
     //console.log('urlList latestMarks:', latestMarks)
-    return tabs.map(t => {
+    return tabs.length && tabs.map(t => {
         const pIdx = (latestMarks.hasOwnProperty(t.url)
             && latestMarks[t.url].hasOwnProperty('pIdx'))
             ? latestMarks[t.url].pIdx
