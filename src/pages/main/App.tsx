@@ -22,12 +22,20 @@ const syncStorageState = (changes, other) => {
     //setMarkLatestCIdx(cIdx)
 }
 
+const blacklistProtocol = ['about:', 'moz-extension:']
+const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
+const isInBlacklist = (s) => {
+    const { protocol } = URL.parse(s);
+    return blacklistProtocol.includes(protocol)
+}
+
+/* ========== TABS ========== */
 const getTabs = async (queryInfo={}) => {
     let tabs = await browser.tabs.query(queryInfo)
     if (tabs.length) {
         tabs = tabs.sort((t1, t2) => (t1.id < t2.id))
     }
-    return tabs
+    return tabs.filter(t=>!isInBlacklist(t.url))
 }
 
 const useTabStore = () => {
@@ -78,8 +86,7 @@ const useTabStore = () => {
 }
 
 /* ========== STORAGE FUNCS =========== */
-const blacklistProtocol = ['about:', 'moz-extension:']
-const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
+
 /*
 const setStorageBookmarkLatest = async () => {
     console.log('setStorageBookmarkLatest');
@@ -110,9 +117,30 @@ const handleClickGetBookmarkLatest = async (e) => {
 */
 
 
+
 const useLocalStorage = () => {
     const [stateLocalStorage, setStateLocalStorage] = useState({});
+    const [isStorageInitialized, setIsStorageInitialized] = useState(false)
+
+    const normalizeStorage = async keys => {
+        for (let k of keys) {
+            if (!k || isInBlacklist(k)) continue;
+            const res = await browser.storage.local.get(k)
+            const v = res[k]
+            console.log('normalize', keys,k,v)
+            if (!v.hasOwnProperty('sIdx') || !v.hasOwnProperty('pIdx') || !v.hasOwnProperty('cIdx')) {
+                await browser.storage.local.set({ [k]: defaultStorageValue })
+            }
+        }
+    }
+
+    const initializeStorage = async () => {
+        const keys = await browser.storage.local.getKeys();
+        return normalizeStorage(keys)
+    }
+
     useEffect(async () => {
+        if (!isStorageInitialized) await initializeStorage()
         const res = await browser.storage.local.get()
 
         setStateLocalStorage(res);
@@ -122,13 +150,17 @@ const useLocalStorage = () => {
             const res = await browser.storage.local.get();
             setStateLocalStorage(res);
         }
+
+        setIsStorageInitialized(true);
         browser.storage.local.onChanged.addListener(storeListener)
         return () => { browser.storage.local.onChanged.removeListener(storeListener) }
     }, []);
     const setLocalStorage = async (x,v=null) => {
         console.log('setLocalStorage', x, v);
-        if (v) { return browser.storage.local.set({[x]:v}) }
-        else { return browser.storage.local.set(stateLocalStorage.concat(x)) }
+        if (v) { await browser.storage.local.set({[x]:v}) }
+        else { await browser.storage.local.set(stateLocalStorage.concat(x)) }
+        const res = await browser.storage.local.get()
+        setStateLocalStorage(res);
     }
 
 
@@ -156,6 +188,10 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
     }
     //console.log('urlList latestMarks:', latestMarks)
     return tabs.length && tabs.map(t => {
+        const sIdx = (latestMarks.hasOwnProperty(t.url)
+            && latestMarks[t.url].hasOwnProperty('sIdx'))
+            ? latestMarks[t.url].sIdx
+            : 0
         const pIdx = (latestMarks.hasOwnProperty(t.url)
             && latestMarks[t.url].hasOwnProperty('pIdx'))
             ? latestMarks[t.url].pIdx
@@ -167,7 +203,7 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
         return (
             <tr key={t.id}>
                 <td>{t.url}</td>
-                <td>{pIdx}, {cIdx}</td>
+                <td>{sIdx}.{pIdx}.{cIdx}</td>
                 <td><button className='border'
                     onClick={() => sendMessageToTab(t.id)}>
                     read</button></td>
@@ -210,25 +246,24 @@ export default function App () {
     //const [tabsUrls, setTabsUrls] = useState([])
     console.log('App preReaderUrl')
     const [readerUrl, setReaderUrl] = useState('');
+    /*
     useEffect(()=>{
-        if (Object.keys(localStorage).length){
-            for (let tab of tabs) {
-                const { protocol, href } = URL.parse(tab.url);
-                const res = localStorage;
-                //console.log('useLocalStorageEffect tab loop', href, res);
-                if ( (!blacklistProtocol.includes(protocol))
-                    && ( !res.hasOwnProperty(href)
-                    || !res[href].hasOwnProperty('pIdx')
-                    || !res[href].hasOwnProperty('cIdx') )) {
-                    console.log('defaulting storageValue w params', tab, href, localStorage)
-                    setLocalStorage(href, defaultStorageValue)
-                }
+        for (let tab of tabs) {
+            const { href } = URL.parse(tab.url);
+            const res = localStorage;
+            //console.log('useLocalStorageEffect tab loop', href, res);
+            if ( !isInBlacklist(tab.url)
+                && ( !res.hasOwnProperty(href)
+                || !res[href].hasOwnProperty('pIdx')
+                || !res[href].hasOwnProperty('cIdx') )) {
+                console.log('defaulting storageValue w params', tab, href, localStorage)
+                setLocalStorage(href, defaultStorageValue)
             }
         }
     }, [tabs, localStorage, setLocalStorage])
+    */
 
-
-    console.log('App preRender:')//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
+    console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
     return (<div className='w-screen h-screen flex flex-col items-center bg-black text-white'>
         <h1>Graze</h1>
@@ -259,7 +294,8 @@ export default function App () {
         </table>
         <Reader
             paragraphUrl={ readerUrl }
-            structuredWork={ structuredWork || defaultStructuredWork } />
+            structuredWork={ structuredWork || defaultStructuredWork }
+            setLocalStorage={ setLocalStorage } />
     </div>)
 }
 

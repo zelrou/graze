@@ -23,9 +23,9 @@ const syncStorageState = (changes, other) => {
     //setMarkLatestCIdx(cIdx)
 }
 
-
-export default function Reader({paragraphUrl, structuredWork}) {
+export default function Reader({paragraphUrl, structuredWork, setLocalStorage }) {
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isStorageInitialized, setIsStorageInitialized] = useState(false);
     const [isMinimized, setIsMinimized] = useState(true);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
@@ -39,10 +39,7 @@ export default function Reader({paragraphUrl, structuredWork}) {
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
     let paragraphsLength;
-    let charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length;
-    let paragraphLength = structuredWork.parts[partIndex].paragraphs.length;
-    let partLength = structuredWork.parts.length;
-
+    console.log(structuredWork);
 
     /* ========== BACKGROUND PAGE MESSAGING ========== */
     const bgSender = (message) => {
@@ -224,15 +221,11 @@ export default function Reader({paragraphUrl, structuredWork}) {
     }
 
     /* ========== STORAGE FUNCS =========== */
-    //const storageChange = useSyncExternalStore(subscribeStorage, syncStorageState);
-    const locationHref = window.location.href;
-
     const setStorageBookmarkLatest = async () => {
         console.log('setStorageBookmarkLatest');
-        const res = await browser.storage.local.set({
-            [paragraphUrl]: { pIdx: paragraphIndex, cIdx: charIndex }
-        })
-        console.log('setStorageMarkOK', res)
+        const mark = { sIdx: partIndex, pIdx: paragraphIndex, cIdx: charIndex }
+        await setLocalStorage(paragraphUrl, {...mark})
+        console.log('setStorageMarkOK');
     }
 
     const handleClickSetBookmarkLatest = async (e) => {
@@ -246,6 +239,9 @@ export default function Reader({paragraphUrl, structuredWork}) {
         let res = await browser.storage.local.get(paragraphUrl)
         if (res) { res = res[paragraphUrl]; }
         console.log('handleClickGetBookmarkLatest', res);
+        if (res && (res.sIdx !== partIndex)) {
+            setPartIndex(res.sIdx);
+        }
         if (res && (res.pIdx !== paragraphIndex)) {
             setParagraphIndex(res.pIdx);
         }
@@ -256,23 +252,18 @@ export default function Reader({paragraphUrl, structuredWork}) {
 
     const handleClickClearBookmarks = async (e) => {
         e.preventDefault()
-        browser.storage.local.set({[paragraphUrl]: {pIdx: 0, cIdx: 0}})
+        browser.storage.local.set({[paragraphUrl]: {
+            sIdx: 0, pIdx: 0, cIdx: 0
+        }})
     }
 
-    /* ========== initializeStorage ========== */
-    const [isStorageInitialized, setIsStorageInitialized] = useState(false);
-    const initializeStorage = async () => {
-        if (!isStorageInitialized) {
-            const storageKeys = await browser.storage.local.getKeys();
-            if (!storageKeys.includes(paragraphUrl)) {
-                browser.storage.local.set({[paragraphUrl]: {pIdx: 0, cIdx: 0}});
-            }
-            setIsStorageInitialized(true);
-        }
-    }
-    initializeStorage();
+
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
+    let partLength;
+    let paragraphLength;
+    let charLength;
+    let heading;
     let mainText;
     const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
     if (paragraphUrl !== prevParagraphUrl) {
@@ -280,16 +271,20 @@ export default function Reader({paragraphUrl, structuredWork}) {
         setPartIndex(0);
         setParagraphIndex(0);
         setCharIndex(0);
-        //paragraphsLength = _paragraphs.length;
-        //paragraphLength = _paragraphs[0].length;
-        // mainText = _paragraphs[0].slice(charIndex, charIndex + charInterval);
+        partLength = structuredWork.parts.length
+        paragraphLength = structuredWork.parts[0].paragraphs.length
+        charLength = structuredWork.parts[0].paragraphs[0].length
+        heading = structuredWork.parts[0].heading
         mainText = structuredWork.parts[0].paragraphs[0].slice(0, charInterval)
         setIsMinimized(false);
     } else {
-        //paragraphsLength = _paragraphs.length;
-        //paragraphLength = _paragraphs[paragraphIndex].length;
-        //mainText = _paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval);
+        partLength = structuredWork.parts.length
+        paragraphLength = structuredWork.parts[partIndex].paragraphs.length
+        charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length
+        heading = structuredWork.parts[partIndex].heading
         mainText = structuredWork && structuredWork.parts[partIndex].paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
+
+        console.log('Reader prerender:', heading, structuredWork.parts[partIndex])
      }
 
     /* ========== MAIN TEXT ========= */
@@ -364,7 +359,7 @@ export default function Reader({paragraphUrl, structuredWork}) {
                     onKeyDown={e=>handleKey(e)} tabIndex="0">
                     <div className={`grow w-full bg-zinc-800 md:w-4/10
                         overflow-scroll place-self-center border p-5`}>
-                        <h2>{structuredWork.parts[partIndex].heading}</h2>
+                        <h2>{ heading }</h2>
                         <p className={classesMainText}>
                             { mainText }
                         </p>
@@ -406,7 +401,7 @@ export default function Reader({paragraphUrl, structuredWork}) {
                     </div>
 
 
-                    {/* Location Controls */}
+                    {/* TODO Location Controls */}
                     <form method="post" onSubmit={handleSubmitSettings}
                         className="w-full flex flex-row justify-center " >
                         <div className='basis-xs flex flex-row justify-center'>
