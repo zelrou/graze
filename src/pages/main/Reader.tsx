@@ -23,12 +23,14 @@ const syncStorageState = (changes, other) => {
     //setMarkLatestCIdx(cIdx)
 }
 
-export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
+
+export default function Reader({paragraphUrl, structuredWork}) {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isMinimized, setIsMinimized] = useState(true);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
+    const [partIndex, setPartIndex] = useState(0);
 
     const [isPaused, togglePaused] = useState(true);
     const [clock, setClock] = useState(0);
@@ -37,7 +39,10 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
     let paragraphsLength;
-    let paragraphLength;
+    let charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length;
+    let paragraphLength = structuredWork.parts[partIndex].paragraphs.length;
+    let partLength = structuredWork.parts.length;
+
 
     /* ========== BACKGROUND PAGE MESSAGING ========== */
     const bgSender = (message) => {
@@ -63,32 +68,77 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
         else { setIsMinimized(false); }
     };
 
-    const getNextMainText = () => {
-        let currWordIndex = wordIndex;
-        let charCount = 0;
-        while ((charCount < charInterval) && (currWordIndex < paragraphLength)) {
-            const currWord = _paragraphs[paragraphIndex][currWordIndex]
-            charCount = charCount + currWord.length + 1;
-            console.log('charCount', charCount, charInterval, currWordIndex, paragraphLength)
-            currWordIndex = currWordIndex + 1
+    const getPrevMainText = () => {
+        const prevCharIndex = charIndex - charInterval;
+        const prevParagraphIndex = paragraphIndex - 1;
+        const prevPartIndex = partIndex - 1;
+        let prevCharLength;
+        let prevParagraphLength;
+        console.log('getPrevMainText', prevCharIndex, prevParagraphIndex, prevPartIndex)
+        if (prevCharIndex < 0) { // we MAY need to go back a paragraph
+            if (prevParagraphIndex < 0) { // we need to go back a part
+                if (prevPartIndex < 0) { // we are at the beginnning
+                    return null
+                } else { // we will go back a whole part
+                    setPartIndex(prevPartIndex);
+                    prevParagraphLength = structuredWork.parts[prevPartIndex]
+                        .paragraphs.length
+                    prevCharLength = structuredWork.parts[prevPartIndex]
+                        .paragraphs[prevParagraphLength - 1].length
+                    // set paragraphIndex to last paragraph of previous part
+                    setParagraphIndex(prevParagraphLength - 1);
+                    // set charIndex to last chars of previous paragraph
+                    setCharIndex(prevCharLength - charInterval);
+                }
+            } else if (charIndex>0) { // we need to go to beginning of paragraph
+                setCharIndex(0);
+            } else{ // we DO need to go back a paragraph
+                console.log('go back a paragraph')
+                setParagraphIndex(prevParagraphIndex)
+                prevCharLength = structuredWork.parts[partIndex]
+                    .paragraphs[prevParagraphIndex].length
+                // set charIndex to last chars of previous paragraph
+                // set to in 0 in case prevCharIndex negative
+                const prevCharIndex = prevCharLength - charInterval
+                console.log(prevCharLength, prevCharIndex)
+                setCharIndex((prevCharIndex > 0) ? prevCharIndex : 0);
+            }
+        } else { // we just need to back by charInterval
+            setCharIndex(prevCharIndex)
         }
-        const mainText = _paragraphs[paragraphIndex].slice(wordIndex,currWordIndex).join(' ')
-        return [mainText, currWordIndex]
     }
 
-    const getPrevMainText = (pIdx, wIdx, cInterval,pLength) => {
-        let _endWordIndex = wIdx;
-        let currWordIndex = wIdx;
-        let mainText = [];
-        let charCount = 0;
-        while ((charCount < cInterval) && (currWordIndex > 0 )) {
-            const currWord = _paragraphs[pIdx][currWordIndex]
-            mainText.push(currWord);
-            charCount = charCount + currWord.length + 1;
-            console.log('charCount', charCount, cInterval, currWordIndex, pLength)
-            currWordIndex = currWordIndex - 1
+    const getNextMainText = () => {
+        console.log('getNextMainText')//structuredWork, partIndex, paragraphIndex)
+        const nextcharIndex = charIndex + charInterval
+        const nextParagraphIndex = paragraphIndex + 1
+        const nextPartIndex = partIndex + 1
+        charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length;
+        paragraphLength = structuredWork.parts[partIndex].paragraphs.length;
+        partLength = structuredWork.parts.length;
+
+        if ( nextcharIndex > charLength - 1) {
+            // we are at end of a paragraph
+            if (nextParagraphIndex > paragraphLength - 1) {
+                // we are at end of part
+                if (nextPartIndex > partLength - 1) {
+                    // we are at end of work
+                    return null;
+                } else {
+                    // move to next part
+                    setPartIndex(nextPartIndex);
+                    setParagraphIndex(0);
+                    setCharIndex(0);
+                }
+            } else {
+                // move to next paragraph
+                setParagraphIndex(nextParagraphIndex)
+                setCharIndex(0);
+            }
+        } else {
+            // move to next charIndex
+            setCharIndex(nextcharIndex)
         }
-        return [mainText.join(' ').reverse(), currWordIndex]
     }
 
     const handleCharIntervalChange = e => {
@@ -99,63 +149,8 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
         setCharInterval(charInterval => Number(e.target.value))
     }
 
-    const handleClickPrev = e => {
-        console.log('handleClickPrev', e, charIndex, paragraphIndex);
-        if (paragraphIndex === 0 && charIndex === 0) {
-            return null;
-        }
-        const prevParagraphIndex = paragraphIndex - 1;
-        let prevParagraphLength;
-        if (paragraphIndex > 0) {
-            prevParagraphLength = _paragraphs[paragraphIndex-1].length;
-        }
-
-        const prevCharIndex = charIndex - charInterval;
-        console.log('prevClickMid', charIndex, prevCharIndex, paragraphIndex, prevParagraphIndex, prevParagraphLength)
-        if (prevCharIndex < 0) {
-            setParagraphIndex(paragraphIndex => prevParagraphIndex);
-            let prevParagraphCharIndex = prevParagraphLength - charInterval;
-            if (prevParagraphCharIndex < 0) { prevParagraphCharIndex = 0 }
-            setCharIndex(charIndex => prevParagraphCharIndex);
-        } else {
-            setCharIndex(charIndex => prevCharIndex);
-        }
-    }
-
-    const handleClickNext = e => {
-        const charToWordEnd = (pIdx, cIdx) => {
-            // use length - 0 because we look one char after interval end
-            if (cIdx + charInterval >= _paragraphs[pIdx].length) {
-                return cIdx
-            }
-            let correctedIdx = cIdx;
-            let correctedEndIdx = cIdx + charInterval;
-            while(_paragraphs[pIdx][correctedEndIdx+1] !== ' ') {
-                correctedIdx = correctedIdx - 1;
-                correctedEndIdx = correctedEndIdx - 1;
-            }
-            return correctedIdx;
-        }
-        const nextCharIndex = charIndex + charInterval;
-        const nextParagraphIndex = paragraphIndex + 1;
-        console.log('handleClickNext', e, paragraphIndex, charIndex, paragraphLength, nextCharIndex,nextParagraphIndex);
-        if (paragraphLength === 0) return setParagraphIndex(nextParagraphIndex);
-        if (nextCharIndex > paragraphLength - 1) {
-            if (nextParagraphIndex > paragraphsLength - 1) {
-                return null
-            }
-            console.log('nextChar > paragraphLen', nextParagraphIndex)
-            setParagraphIndex(nextParagraphIndex);
-            setCharIndex(0);
-        } else {
-            setCharIndex(nextCharIndex);
-            // setCharIndex(charToWordEnd(paragraphIndex, nextCharIndex));
-        }
-        console.log('handleClickNextEnd', e, charIndex, paragraphIndex);
-    }
-
     const onTick = useEffectEvent(()=>{
-        handleClickNext();
+        getNextMainText();
     });
 
     /* TODO isPaused, delay dependency can be removed? */
@@ -193,10 +188,10 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
                 handleClickPause();
                 break;
             case 37: // ArrowLeft
-                handleClickPrev();
+                getPrevMainText();
                 break;
             case 39: // ArrowRight
-                handleClickNext();
+                getNextMainText();
                 break;
             default:
                 break;
@@ -282,23 +277,26 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
     const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
     if (paragraphUrl !== prevParagraphUrl) {
         setPrevParagraphUrl(paragraphUrl);
+        setPartIndex(0);
         setParagraphIndex(0);
         setCharIndex(0);
-        paragraphsLength = _paragraphs.length;
-        paragraphLength = _paragraphs[0].length;
-        mainText = _paragraphs[0].slice(charIndex, charIndex + charInterval);
+        //paragraphsLength = _paragraphs.length;
+        //paragraphLength = _paragraphs[0].length;
+        // mainText = _paragraphs[0].slice(charIndex, charIndex + charInterval);
+        mainText = structuredWork.parts[0].paragraphs[0].slice(0, charInterval)
         setIsMinimized(false);
     } else {
-        paragraphsLength = _paragraphs.length;
-        paragraphLength = _paragraphs[paragraphIndex].length;
-        mainText = _paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval);
+        //paragraphsLength = _paragraphs.length;
+        //paragraphLength = _paragraphs[paragraphIndex].length;
+        //mainText = _paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval);
+        mainText = structuredWork && structuredWork.parts[partIndex].paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
      }
 
     /* ========== MAIN TEXT ========= */
     const classesMainText = [
         'font-[Georgia] text-2xl indent-0 text-left md:px-20',
         'text-balanced whitespace-normal break-normal',
-        `before:content-[${charIndex===0 ? 'P'+paragraphIndex : ''}]`
+        /*`before:content-[${charIndex===0 ? "'P"+paragraphIndex+"'" : ''}]`*/
         ].join(' ')
 
     // bg-zinc-700
@@ -364,14 +362,14 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
                 <div className={['flex flex-col grow',
                     isMinimized ? 'hidden' : ''].join(' ')}
                     onKeyDown={e=>handleKey(e)} tabIndex="0">
-                    <div className='grow w-full bg-zinc-800 md:w-4/10 overflow-scroll place-self-center border p-5'>
+                    <div className={`grow w-full bg-zinc-800 md:w-4/10
+                        overflow-scroll place-self-center border p-5`}>
+                        <h2>{structuredWork.parts[partIndex].heading}</h2>
                         <p className={classesMainText}>
                             { mainText }
                         </p>
                     </div>
                 </div>
-
-
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
@@ -414,39 +412,46 @@ export default function Reader({paragraphUrl, _paragraphs, structuredWork}) {
                         <div className='basis-xs flex flex-row justify-center'>
                             <label for='paragraph'>¶:
                                 <input type='number' name='paragraphIndexInput'
-                                    min='0' max={_paragraphs.length}
+                                    min='0' max={paragraphLength}
                                     onChange={e=>handleLocationChange(e)} />
                             </label>
-                            <span>{ `/${paragraphsLength}` }</span>
+                            <span>{ `/${paragraphLength}` }</span>
                         </div>
+                        {/* TODO set max after selecting part and paragraph */}
+                        {/*
                         <div className='basis-xs flex flex-row justify-center'>
                             <label for='word'>c:
                                 <input type='number' name='charIndexInput'
-                                    min='0' max={_paragraphs.map(p=>p.length).reduce((acc, cur)=>acc>cur?acc:cur)}
+                                    min='0' max={100}
                                     onChange={e=>handleLocationChange(e)} />
                             </label>
-                            <span> { `/${paragraphLength}` } </span>
+                            <span> { `/${charLength}` } </span>
                         </div>
                         <button type="submit"
                            className='basis-xs bg-indigo-500 hover:bg-fuchsia-500'>
                            go </button>
+                       */}
                     </form>
 
 
                     {/* Seek Controls */}
                     <div className='flex flex-row'>
-                        <button className='w-1/10 border' onClick={handleClickPrev}>back</button>
+                        <button className='w-1/10 border' onClick={getPrevMainText}>back</button>
                         <div className='w-8/10 flex flex-col'>
                             <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow' value={charIndex/paragraphLength} />
-                                <span className='text-sm text-black fixed'>{`${charIndex}/${paragraphLength}`}</span>
+                                <progress className='grow' value={charIndex/charLength} />
+                                <span className='text-sm text-black fixed'>{`${charIndex}/${charLength-1}`}</span>
                             </div>
                             <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow' value={paragraphIndex/paragraphsLength} />
-                                <span className='text-sm text-black fixed'>{`${paragraphIndex}/${paragraphsLength}`}</span>
+                                <progress className='grow' value={paragraphIndex/paragraphLength} />
+                                <span className='text-sm text-black fixed'>{`${paragraphIndex}/${paragraphLength-1}`}</span>
+                            </div>
+                            <div className='w-full flex flex-row justify-center static'>
+                                <progress className='grow' value={partIndex/partLength} />
+                                <span className='text-sm text-black fixed'>{`${partIndex}/${partLength-1}`}</span>
                             </div>
                         </div>
-                        <button className='w-1/10 border' onClick={handleClickNext}>fwrd</button>
+                        <button className='w-1/10 border' onClick={getNextMainText}>fwrd</button>
                     </div>
 
 

@@ -42,13 +42,11 @@ const useTabStore = () => {
             const ts = await getTabs()
             setTabs(ts);
         }
-        /*
-        if ( tabInfo.status === "complete" ) {
-            if (!tabsIds().includes(tabId)
-               || !tabsUrls().includes(tabInfo.url) ) {
-                console.log('handleUpdated adding', tabs, tabId, changeInfo, tabInfo);
-                setTabs(tabs => tabs.concat(tabInfo))
-            }
+        /* TODO avoid getting all tabs in handleUpdated e.g.
+        if (!tabsIds().includes(tabId)
+           || !tabsUrls().includes(tabInfo.url) ) {
+            console.log('handleUpdated adding', tabs, tabId, changeInfo, tabInfo);
+            setTabs(tabs => tabs.concat(tabInfo))
         }
         */
     }
@@ -60,7 +58,8 @@ const useTabStore = () => {
 
     useEffect(async () => {
         console.log('useEffect runs')
-        const tabs = await getTabs();
+        /* TODO blacklistProtocol on tabs here */
+        let tabs = await getTabs();
         setTabs(tabs);
 
         const updateFilters = {properties: ["status"]}
@@ -79,9 +78,9 @@ const useTabStore = () => {
 }
 
 /* ========== STORAGE FUNCS =========== */
-//const storageChange = useSyncExternalStore(subscribeStorage, syncStorageState);
-const defaultStorageValue = {pIdx: 0, cIdx: 0}
-
+const blacklistProtocol = ['about:', 'moz-extension:']
+const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
+/*
 const setStorageBookmarkLatest = async () => {
     console.log('setStorageBookmarkLatest');
     const res = await browser.storage.local.set({
@@ -108,26 +107,9 @@ const handleClickGetBookmarkLatest = async (e) => {
         setCharIndex(res.cIdx);
     }
 }
-
-const handleClickClearBookmarks = async (e) => {
-    e.preventDefault()
-    browser.storage.local.set({[paragraphUrl]: {pIdx: 0, cIdx: 0}})
-}
-
-/*
-const [isStorageInitialized, setIsStorageInitialized] = useState(false);
-const initializeStorage = async () => {
-    if (!isStorageInitialized) {
-        const storageKeys = await browser.storage.local.getKeys();
-        if (!storageKeys.includes(paragraphUrl)) {
-            browser.storage.local.set({[paragraphUrl]: defaultStorageValue});
-        }
-        setIsStorageInitialized(true);
-    }
-}
 */
 
-const blacklistProtocol = ['about:', 'moz-extension:']
+
 const useLocalStorage = () => {
     const [stateLocalStorage, setStateLocalStorage] = useState({});
     useEffect(async () => {
@@ -149,20 +131,25 @@ const useLocalStorage = () => {
         else { return browser.storage.local.set(stateLocalStorage.concat(x)) }
     }
 
+
     console.log('end:useLocalStorage')//, stateLocalStorage);
     return [stateLocalStorage, setLocalStorage];
 }
 
 /* ========== OPEN TAB LIST ========== */
-let _paragraphs = [[]];
-let structuredWork = {};
+const defaultStructuredWork = {
+    author: '',
+    title: '',
+    parts: [{ heading:'', paragraphs:[''] }]
+}
+let structuredWork = defaultStructuredWork;
 const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
     const sendMessageToTab = async tabId => {
         const tabResponse = await browser.tabs.sendMessage(tabId,
             { greeting: "Hi from background script" })
         console.log("Message from the content script:");
         console.log(tabResponse);
-        _paragraphs = tabResponse._paragraphs;
+        //_paragraphs = tabResponse._paragraphs;
         structuredWork = tabResponse.structuredWork
         const targetTab = tabs.filter(t => t.id === tabId)[0]
         setReaderUrl(targetTab.url)
@@ -213,6 +200,8 @@ const PrevUrlList = ({tabs, latestMarks}) => {
             </tr>) })
 }
 
+
+
 export default function App () {
     console.log('App didMount')
     const tabs = useTabStore();
@@ -251,7 +240,10 @@ export default function App () {
                 <th>Read</th>
             </tr></thead>
             <tbody>
-                <UrlList tabs={ tabs } setReaderUrl={ setReaderUrl } latestMarks={ localStorage } />
+                <UrlList
+                    tabs={ tabs }
+                    setReaderUrl={ setReaderUrl }
+                    latestMarks={ localStorage } />
             </tbody>
         </table>
         <h2>Previous Tabs</h2>
@@ -265,8 +257,9 @@ export default function App () {
                 <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
             </tbody>
         </table>
-        <Reader paragraphUrl={ readerUrl } _paragraphs={ _paragraphs }
-            structuredWork={ structuredWork } />
+        <Reader
+            paragraphUrl={ readerUrl }
+            structuredWork={ structuredWork || defaultStructuredWork } />
     </div>)
 }
 
