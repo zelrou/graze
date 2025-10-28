@@ -5,23 +5,13 @@ import {
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
 
+const svgChevronUp = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+</svg>)
+const svgChevronDown = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+</svg>)
 
-const subscribeStorage = callback => {
-    if (browser.storage ) {
-        // console.log(browser.storage)
-        browser.storage.local.onChanged.addListener(callback)
-    }
-    return () => {
-        browser.storage.local.onChanged.removeListener(callback)
-    }
-}
-
-const syncStorageState = (changes, other) => {
-    //const { pIdx, cIdx } = storageChange;
-    console.log('storageChanges:', changes, other)
-    //setMarkLatestPIdx(pIdx)
-    //setMarkLatestCIdx(cIdx)
-}
 
 export default function Reader({paragraphUrl, structuredWork, setLocalStorage }) {
     const [isInitialized, setIsInitialized] = useState(false);
@@ -38,33 +28,59 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
-    let paragraphsLength;
-    console.log(structuredWork);
+
+    /* ========== RESET LOCATION ON PROPS CHANGE ========== */
+    let partLength;
+    let paragraphLength;
+    let charLength;
+    let heading;
+    let mainText;
+    const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
+    if (paragraphUrl !== prevParagraphUrl) {
+        setPrevParagraphUrl(paragraphUrl);
+        setPartIndex(0);
+        setParagraphIndex(0);
+        setCharIndex(0);
+        partLength = structuredWork.parts.length
+        paragraphLength = structuredWork.parts[0].paragraphs.length
+        charLength = structuredWork.parts[0].paragraphs[0].length
+        heading = structuredWork.parts[0].heading
+        mainText = structuredWork.parts[0].paragraphs[0].slice(0, charInterval)
+        setIsMinimized(false);
+    } else {
+        partLength = structuredWork.parts.length
+        paragraphLength = structuredWork.parts[partIndex].paragraphs.length
+        charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length
+        heading = structuredWork.parts[partIndex].heading
+        mainText = structuredWork.parts[partIndex].paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
+     }
 
     /* ========== BACKGROUND PAGE MESSAGING ========== */
-    const bgSender = (message) => {
-        return browser.runtime.sendMessage({ content: `Function call: ${message}` });
-    }
-    const bgReceiver = (request, sender, sendResponse) => {
-        console.log(request, sender, sendResponse)
-        if (request.data.action === "open_contentScript") {
-            setIsClosed(false);
-        }
-        const msg = 'msg from content'
-        sendResponse(msg);
-        bgSender(msg);
-    };
     useEffect(()=>{
+        const bgSender = (message) => {
+            return browser.runtime.sendMessage({ content: `Function call: ${message}` });
+        }
+        const bgReceiver = (request, sender, sendResponse) => {
+            console.log(request, sender, sendResponse)
+            if (request.data.action === "open_contentScript") {
+                setIsClosed(false);
+            }
+            const msg = 'msg from content'
+            sendResponse(msg);
+            bgSender(msg);
+        };
         browser.runtime.onMessage.addListener(bgReceiver);
         return () => browser.runtime.onMessage.removeListener(bgReceiver);
     })
 
+    /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
     const handleClickMinimize = () => {
         console.log('handleClickMinimize', isMinimized)
         if (!isMinimized) { setIsMinimized(true); }
         else { setIsMinimized(false); }
     };
 
+    /* ========== SEEKING ========== */
     const getPrevMainText = () => {
         const prevCharIndex = charIndex - charInterval;
         const prevParagraphIndex = paragraphIndex - 1;
@@ -110,34 +126,26 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         const nextcharIndex = charIndex + charInterval
         const nextParagraphIndex = paragraphIndex + 1
         const nextPartIndex = partIndex + 1
-        charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length;
-        paragraphLength = structuredWork.parts[partIndex].paragraphs.length;
-        partLength = structuredWork.parts.length;
 
-        if ( nextcharIndex > charLength - 1) {
-            // we are at end of a paragraph
-            if (nextParagraphIndex > paragraphLength - 1) {
-                // we are at end of part
-                if (nextPartIndex > partLength - 1) {
-                    // we are at end of work
+        if ( nextcharIndex > charLength - 1) { // we are at end of a paragraph
+            if (nextParagraphIndex > paragraphLength - 1) { // we are part end
+                if (nextPartIndex > partLength - 1) { // we are at end of work
                     return null;
-                } else {
-                    // move to next part
+                } else { // move to next part
                     setPartIndex(nextPartIndex);
                     setParagraphIndex(0);
                     setCharIndex(0);
                 }
-            } else {
-                // move to next paragraph
+            } else { // move to next paragraph
                 setParagraphIndex(nextParagraphIndex)
                 setCharIndex(0);
             }
-        } else {
-            // move to next charIndex
+        } else { // move to next charIndex
             setCharIndex(nextcharIndex)
         }
     }
 
+    /* ========== AUTO SEEKING ========== */
     const handleCharIntervalChange = e => {
         console.log('handleCharIntervalChange', e, charInterval)
         e.preventDefault();
@@ -174,6 +182,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             togglePaused(isPaused => true) }
     }
 
+    /* ========== KEYBINDINGS ========== */
     const handleKey = (e) => {
         e.preventDefault();
         console.log(e.type, e.key, e.keyCode, e.charCode)
@@ -197,6 +206,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         if (e.keyCode === 32) handleClickPause();
     }
 
+    /* ========== INPUT FORM HANDLING ========== */
     const handleDelayChange = e => {
         e.stopPropagation();
         if (!isPaused) togglePaused(true);
@@ -252,49 +262,19 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
     const handleClickClearBookmarks = async (e) => {
         e.preventDefault()
-        browser.storage.local.set({[paragraphUrl]: {
-            sIdx: 0, pIdx: 0, cIdx: 0
-        }})
+        return browser.storage.local.set({
+            [paragraphUrl]: { sIdx: 0, pIdx: 0, cIdx: 0 }
+        })
     }
 
-
-
-    /* ========== RESET LOCATION ON PROPS CHANGE ========== */
-    let partLength;
-    let paragraphLength;
-    let charLength;
-    let heading;
-    let mainText;
-    const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
-    if (paragraphUrl !== prevParagraphUrl) {
-        setPrevParagraphUrl(paragraphUrl);
-        setPartIndex(0);
-        setParagraphIndex(0);
-        setCharIndex(0);
-        partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[0].paragraphs.length
-        charLength = structuredWork.parts[0].paragraphs[0].length
-        heading = structuredWork.parts[0].heading
-        mainText = structuredWork.parts[0].paragraphs[0].slice(0, charInterval)
-        setIsMinimized(false);
-    } else {
-        partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[partIndex].paragraphs.length
-        charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length
-        heading = structuredWork.parts[partIndex].heading
-        mainText = structuredWork && structuredWork.parts[partIndex].paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
-
-        console.log('Reader prerender:', heading, structuredWork.parts[partIndex])
-     }
-
-    /* ========== MAIN TEXT ========= */
+    /* ========== MAIN TEXT STYLE ========= */
     const classesMainText = [
         'font-[Georgia] text-2xl indent-0 text-left md:px-20',
         'text-balanced whitespace-normal break-normal',
         /*`before:content-[${charIndex===0 ? "'P"+paragraphIndex+"'" : ''}]`*/
         ].join(' ')
 
-    // bg-zinc-700
+    console.log('Reader prerender:')//, heading, structuredWork.parts[partIndex])
     return (
         <>
         {/* ========== READER MODAL BACKGROUND ========== */}
@@ -326,7 +306,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                             <button className='border p-1'
                                 onClick={ () => (paragraphUrl.length
                                             && handleClickMinimize()) }>
-                                {!isMinimized ? '-' : 'O'}
+                                {!isMinimized ? svgChevronDown : svgChevronUp}
                             </button>
                         </div>
                     </div>
