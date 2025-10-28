@@ -6,12 +6,96 @@ const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
 
 const svgChevronUp = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-</svg>)
+      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+    </svg>)
 const svgChevronDown = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-</svg>)
+      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>)
+const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+    </svg>)
 
+
+const SearchResultTableRow = ({match}) => {
+    const locString = `${match.at(0)}.${match.at(1)}.${match.at(2)}`
+    return (<tr>
+        <td>{match[3]}</td>
+        <td>{locString}</td>
+        <td><button onClick={()=>null}>
+            {svgChevronRight2}</button></td>
+        </tr>)
+}
+
+const SearchResultTable = ({searchResults}) => {
+    const tableRows = searchResults.map(searchResult=>(
+        <SearchResultTableRow match={searchResult} />))
+    return (<table className=''>
+        <thead><td>match</td><td>location</td><td>Go</td></thead>
+        <tbody className={''}>{tableRows}</tbody>
+    </table>)
+}
+
+function* genParts(sw) {
+    yield* sw.parts.entries()
+}
+
+function* genParagraphs(sw) {
+    for (let [sIdx, part] of genParts(sw)) {
+        for (let [pIdx, paragraph] of part.paragraphs.entries()){
+            yield [sIdx,pIdx,paragraph,part.heading]
+        }
+    }
+}
+
+const SearchContainer = ({structuredWork}) => {
+    const [searchQuery, setSearchQuery] = useState('')
+    const contextLen = 40;
+    let prevQ = ''
+    const searchResults = (q => {
+        if (prevQ == q) return [];
+        const rQ = new RegExp(q, 'gid')
+        const res = []
+        for (let paragraph of genParagraphs(structuredWork)) {
+            console.log(paragraph)
+            const target = paragraph[2]
+            console.log('searching target,query', target, rQ)
+            const matches = target.matchAll(rQ)
+            for (const match of matches) {
+                const startMatch = match.index
+                const endMatch = match.indices[0][1]
+                const ctxStart = Math.max(0,startMatch-contextLen)
+                const ctxEnd = endMatch + contextLen
+                const contextMatch = match.input.slice(ctxStart, ctxEnd)
+                console.log(target, paragraph)
+                const m = [paragraph[0],paragraph[1],startMatch,contextMatch]
+                res.push(m)
+            }
+        }
+        return res;
+    })(searchQuery)
+
+    const handleQueryChange = e => e.stopPropagation();
+
+    const handleSubmitSearch = e => {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        const {query} = Object.fromEntries(formData)
+        console.log('search submit data', query);
+        setSearchQuery(query);
+    }
+
+    console.log(searchResults)
+    return(<>
+        <form method='post' onSubmit={handleSubmitSearch}>
+            <input name='query' type='text' minLength={4} maxLength={20}
+                className='bg-[#4f7777fc] focus:outline-2'
+                onChange={handleQueryChange} autoFocus />
+            <button className='border bg-sky-500 hover:bg-sky-700'> Search</button>
+        </form>
+        <SearchResultTable searchResults={searchResults} />
+    </>)
+}
 
 export default function Reader({paragraphUrl, structuredWork, setLocalStorage }) {
     const [isInitialized, setIsInitialized] = useState(false);
@@ -28,6 +112,9 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
+
+    /* ========== SEARCH STATE ========== */
+    const [isOpenSearchContainer, setIsOpenSearchContainer] = useState(false)
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
     let partLength;
@@ -81,6 +168,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
     };
 
     /* ========== SEEKING ========== */
+    /* TODO structuredWork class
+     * make seeking into instance methods returning location for set state */
     const getPrevMainText = () => {
         const prevCharIndex = charIndex - charInterval;
         const prevParagraphIndex = paragraphIndex - 1;
@@ -267,6 +356,13 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         })
     }
 
+
+    const handleClickOpenSearchContainer = e => {
+        e.preventDefault()
+        if (!isPaused) togglePaused(true);
+        setIsOpenSearchContainer(isOpen => !isOpen);
+    }
+
     /* ========== MAIN TEXT STYLE ========= */
     const classesMainText = [
         'font-[Georgia] text-2xl indent-0 text-left md:px-20',
@@ -287,20 +383,33 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             ].join(' ')
             }>
         {/* ========== READER MODAL ROOT ========== */}
-        <div id='reader-modal-root' className={ ['z-50 grid',
-            'md:p-4 text-lg border bg-zinc-700',
+        <div style={{height:'70vh'}} id='reader-modal-root' className={ ['z-50 flex flex-col',
+            'md:p-4 text-lg border bg-zinc-700 relative align-start justify-start',
             isMinimized ? 'w-fit' : 'sm:w-screen md:w-7/10',
-            isMinimized ? 'h-full' : 'h-full md:h-7/10',
+            isMinimized ? 'h-full' : '',
             isMinimized ? 'place-self-start' : 'place-self-center'
             ].join(' ') }>
 
-            <div className='flex flex-col h-full'>
+
 
 
                 {/* ========== TOOLBAR TOP ========== */}
-                <div className='flex-none align-self-start justify-self-center place-items-center grid grid-cols-5'>
-                    <div className='md:col-start-2 col-span-3 place-items-center'>Reader</div>
-                    <div className='col-span-1 gap-4 place-items-end grid grid-cols-3 divide-x-3 divide-dashed divide-indigo-500 text-sm'>
+                <div className={`flex flex-row justify-between`}>
+
+                    {/* ---------- OPEN SEARCH CONTAINER ---------- */}
+                    <div className='flex-none'>
+                        <button className='border'
+                            onClick={handleClickOpenSearchContainer}>
+                            { !isOpenSearchContainer ? 'Search' : 'Back' }
+                        </button>
+                    </div>
+
+                    {/* ---------- WINDOW TITLE ---------- */}
+                    <div className='basis-sm md:col-start-2 col-span-3 place-items-center'>
+                        Reader</div>
+
+                    {/* ---------- MIN/MAX READER WINDOW ---------- */}
+                    <div className='basis-sm col-span-1 gap-4 place-items-end grid grid-cols-3 divide-x-3 divide-dashed divide-indigo-500 text-sm'>
                         {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
                         <div className=''>
                             <button className='border p-1'
@@ -312,11 +421,21 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     </div>
                 </div>
 
+            {/* ========== SEARCH RESULTS ==========*/}
+            <div className={isOpenSearchContainer ? 'flex flex-col flex-shrink align-center overflow-scroll relative' : 'hidden'}>
+                <SearchContainer structuredWork={structuredWork}/>
+            </div>
+
+            <div className={!isOpenSearchContainer ? 'grow flex flex-col' : 'hidden'}>
+                {/* ========== WORK AUTHOR TITLE BAR ==========*/}
                 <div className='flex flex-row w-full justify-around'>
                     <h1 className='font-bold'>{structuredWork.author || '' }</h1>
                     <h1 className='italic'>{structuredWork.title || paragraphUrl}</h1>
                 </div>
 
+
+
+                {/* ========== BOOKMARK TOOLBAR ==========*/}
                 <div className={`${isMinimized && 'hidden'} w-full flex flex-row text-sm`}>
                     <button className='grow border p-1 hover:bg-yellow-500'
                         onClick={handleClickClearBookmarks} >
