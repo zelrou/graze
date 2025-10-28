@@ -1,5 +1,6 @@
 import {
-    useState, useEffect, useEffectEvent, createContext, useContext
+    useState, useEffect, useEffectEvent, createContext, useContext,
+    memo, useMemo
 } from 'react';
 
 const DEFAULTS = {};
@@ -30,14 +31,14 @@ const SearchResultTableRow = ({match}) => {
         </tr>)
 }
 
-const SearchResultTable = ({searchResults}) => {
+const SearchResultTable = memo(({searchResults}) => {
     const tableRows = searchResults.map(searchResult=>(
         <SearchResultTableRow match={searchResult} />))
     return (<table className=''>
         <thead><td>match</td><td>location</td><td>Go</td></thead>
         <tbody className={''}>{tableRows}</tbody>
     </table>)
-}
+})
 
 function* genParts(sw) {
     yield* sw.parts.entries()
@@ -55,7 +56,8 @@ const SearchContainer = ({structuredWork}) => {
     const [searchQuery, setSearchQuery] = useState('')
     const contextLen = 40;
     let prevQ = ''
-    const searchResults = (q => {
+    const searchResults = useMemo(() => {
+        const q = searchQuery
         if (prevQ == q) return [];
         const rQ = new RegExp(q, 'gid')
         const res = []
@@ -76,7 +78,7 @@ const SearchContainer = ({structuredWork}) => {
             }
         }
         return res;
-    })(searchQuery)
+    }, [searchQuery])
 
     const handleQueryChange = e => e.stopPropagation();
 
