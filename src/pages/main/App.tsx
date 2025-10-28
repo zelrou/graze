@@ -5,23 +5,6 @@ import {
 } from 'react';
 
 
-const subscribeStorage = callback => {
-    if (browser.storage ) {
-        // console.log(browser.storage)
-        browser.storage.local.onChanged.addListener(callback)
-    }
-    return () => {
-        browser.storage.local.onChanged.removeListener(callback)
-    }
-}
-
-const syncStorageState = (changes, other) => {
-    //const { pIdx, cIdx } = storageChange;
-    console.log('storageChanges:', changes, other)
-    //setMarkLatestPIdx(pIdx)
-    //setMarkLatestCIdx(cIdx)
-}
-
 const blacklistProtocol = ['about:', 'moz-extension:']
 const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
 const isInBlacklist = (s) => {
