@@ -1,5 +1,5 @@
 import {
-    useState, useEffect, useEffectEvent
+    useState, useEffect, useEffectEvent, createContext, useContext
 } from 'react';
 
 const DEFAULTS = {};
@@ -15,13 +15,17 @@ const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" vi
       <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
     </svg>)
 
-
+const SetLocationContext = createContext(null)
 const SearchResultTableRow = ({match}) => {
-    const locString = `${match.at(0)}.${match.at(1)}.${match.at(2)}`
+    const { setLocation } = useContext(SetLocationContext)
+    const sIdx = match.at(0)
+    const pIdx = match.at(1)
+    const cIdx = match.at(2)
+    const locString = `${sIdx}.${pIdx}.${cIdx}`
     return (<tr>
         <td>{match[3]}</td>
         <td>{locString}</td>
-        <td><button onClick={()=>null}>
+        <td><button onClick={()=>setLocation(sIdx, pIdx, cIdx)}>
             {svgChevronRight2}</button></td>
         </tr>)
 }
@@ -113,8 +117,13 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
     const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
     const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
 
-    /* ========== SEARCH STATE ========== */
+    /* ========== SEARCH STATE & LOCATION CONTEXT ========== */
     const [isOpenSearchContainer, setIsOpenSearchContainer] = useState(false)
+    const setLocation = (s, p, c) => {
+        setPartIndex(s)
+        setParagraphIndex(p)
+        setCharIndex(c)
+    }
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
     let partLength;
@@ -391,39 +400,39 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             ].join(' ') }>
 
 
+            {/* ========== TOOLBAR TOP ========== */}
+            <div className={`flex flex-row justify-between`}>
 
+                {/* ---------- OPEN SEARCH CONTAINER ---------- */}
+                <div className='flex-none'>
+                    <button className='border'
+                        onClick={handleClickOpenSearchContainer}>
+                        { !isOpenSearchContainer ? 'Search' : 'Back' }
+                    </button>
+                </div>
 
-                {/* ========== TOOLBAR TOP ========== */}
-                <div className={`flex flex-row justify-between`}>
+                {/* ---------- WINDOW TITLE ---------- */}
+                <div className='basis-sm md:col-start-2 col-span-3 place-items-center'>
+                    Reader</div>
 
-                    {/* ---------- OPEN SEARCH CONTAINER ---------- */}
-                    <div className='flex-none'>
-                        <button className='border'
-                            onClick={handleClickOpenSearchContainer}>
-                            { !isOpenSearchContainer ? 'Search' : 'Back' }
+                {/* ---------- MIN/MAX READER WINDOW ---------- */}
+                <div className='basis-sm col-span-1 gap-4 place-items-end grid grid-cols-3 divide-x-3 divide-dashed divide-indigo-500 text-sm'>
+                    {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
+                    <div className=''>
+                        <button className='border p-1'
+                            onClick={ () => (paragraphUrl.length
+                                        && handleClickMinimize()) }>
+                            {!isMinimized ? svgChevronDown : svgChevronUp}
                         </button>
                     </div>
-
-                    {/* ---------- WINDOW TITLE ---------- */}
-                    <div className='basis-sm md:col-start-2 col-span-3 place-items-center'>
-                        Reader</div>
-
-                    {/* ---------- MIN/MAX READER WINDOW ---------- */}
-                    <div className='basis-sm col-span-1 gap-4 place-items-end grid grid-cols-3 divide-x-3 divide-dashed divide-indigo-500 text-sm'>
-                        {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
-                        <div className=''>
-                            <button className='border p-1'
-                                onClick={ () => (paragraphUrl.length
-                                            && handleClickMinimize()) }>
-                                {!isMinimized ? svgChevronDown : svgChevronUp}
-                            </button>
-                        </div>
-                    </div>
                 </div>
+            </div>
 
             {/* ========== SEARCH RESULTS ==========*/}
             <div className={isOpenSearchContainer ? 'flex flex-col flex-shrink align-center overflow-scroll relative' : 'hidden'}>
-                <SearchContainer structuredWork={structuredWork}/>
+                <SetLocationContext value={{setLocation}}>
+                    <SearchContainer structuredWork={structuredWork}/>
+                </SetLocationContext>
             </div>
 
             <div className={!isOpenSearchContainer ? 'grow flex flex-col' : 'hidden'}>
