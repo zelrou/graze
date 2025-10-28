@@ -86,8 +86,8 @@ export function getParagraphsWithHeadings(node, expr=phXPath) {
         //console.log(res)
         if (res.tagName === "TITLE") { found.title = res.innerText }
         else if (res.tagName === "META") { found.author = res.content }
-        else if (res.tagName.slice(0,1) === "H") {
-            found.parts.push({heading: res.innerText, paragraphs:[]})
+        else if (res.tagName.at(0) === "H") {
+            found.parts.push({heading: res.innerText, paragraphs:[res.innerText]})
         } else if (res.tagName === "P") {
             //console.log('entered P', res, found)
             if (found.parts.length && found.parts.at(-1).hasOwnProperty('paragraphs')) {
