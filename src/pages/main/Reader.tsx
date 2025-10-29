@@ -12,9 +12,19 @@ const svgChevronUp = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 const svgChevronDown = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
     </svg>)
+const svgChevronRight = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-7">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+</svg>)
+const svgChevronLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-7">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+</svg>)
 const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
     </svg>)
+const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+</svg>)
+
 
 const SetLocationContext = createContext(null)
 const SearchResultTableRow = ({match}) => {
@@ -24,9 +34,10 @@ const SearchResultTableRow = ({match}) => {
     const cIdx = match.at(2)
     const locString = `${sIdx}.${pIdx}.${cIdx}`
     return (<tr>
-        <td>{match[3]}</td>
-        <td>{locString}</td>
-        <td><button onClick={()=>setLocation(sIdx, pIdx, cIdx)}>
+        <td className='border-b p-2 pl-8 border-gray-300'>{match[3]}</td>
+        <td className='border-b p-2 pl-8 border-gray-300 text-right'>{locString}</td>
+        <td className='border-b p-2 pl-8 border-gray-300'><button
+            onClick={()=>setLocation(sIdx, pIdx, cIdx)}>
             {svgChevronRight2}</button></td>
         </tr>)
 }
@@ -34,9 +45,9 @@ const SearchResultTableRow = ({match}) => {
 const SearchResultTable = memo(({searchResults, paragraphUrl}) => {
     const tableRows = searchResults.map(searchResult=>(
         <SearchResultTableRow match={searchResult} />))
-    return (<table className=''>
+    return (<table className='border-separate'>
         <thead><td>match</td><td>location</td><td>Go</td></thead>
-        <tbody className={''}>{tableRows}</tbody>
+        <tbody className={'text-sm'}>{tableRows}</tbody>
     </table>)
 })
 
@@ -384,8 +395,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
     /* ========== MAIN TEXT STYLE ========= */
     const classesMainText = [
-        'font-[Georgia] text-2xl indent-0 text-left md:px-20',
-        'text-balanced whitespace-normal break-normal',
+        'font-serif text-2xl indent-0 text-left md:px-20 text-zinc-200',
+        'text-balanced whitespace-normal break-normal place-self-center',
         /*`before:content-[${charIndex===0 ? "'P"+paragraphIndex+"'" : ''}]`*/
         ].join(' ')
 
@@ -402,34 +413,36 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             ].join(' ')
             }>
         {/* ========== READER MODAL ROOT ========== */}
-        <div style={{height:'70vh'}} id='reader-modal-root' className={ ['z-50 flex flex-col',
-            'md:p-4 text-lg border bg-zinc-700 relative align-start justify-start',
-            isMinimized ? 'w-fit' : 'sm:w-screen md:w-7/10',
-            isMinimized ? 'h-full' : '',
+        <div id='reader-modal-root' className={ ['z-50 flex flex-col',
+            `md:pt-4 font-sans text-lg text-zinc-300
+            border-2 border-gray-300/50
+            rounded-sm bg-zinc-900 relative align-start justify-start`,
+            isMinimized ? 'w-fit' : 'sm:w-screen lg:w-7/10',
+            isMinimized ? 'h-full' : 'lg:h-7/10 h-full',
             isMinimized ? 'place-self-start' : 'place-self-center'
             ].join(' ') }>
 
 
             {/* ========== TOOLBAR TOP ========== */}
-            <div className={`flex flex-row justify-between`}>
+            <div className={`pl-4 pr-4 flex flex-row justify-center justify-between`}>
 
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
-                <div className='flex-none'>
-                    <button className='border'
+                <div className='flex-shrink flex flex-row flex-shrink justify-center'>
+                    <button className='border-1 p-2 rounded-xl border-gray-300/50'
                         onClick={handleClickOpenSearchContainer}>
-                        { !isOpenSearchContainer ? 'Search' : 'Back' }
+                        { !isOpenSearchContainer ? svgMagnifyingGlass : 'Back' }
                     </button>
                 </div>
 
                 {/* ---------- WINDOW TITLE ---------- */}
-                <div className='basis-sm md:col-start-2 col-span-3 place-items-center'>
-                    Reader</div>
+                <div className='grow flex flex-row justify-center'>
+                    <h1>Reader</h1></div>
 
                 {/* ---------- MIN/MAX READER WINDOW ---------- */}
-                <div className='basis-sm col-span-1 gap-4 place-items-end grid grid-cols-3 divide-x-3 divide-dashed divide-indigo-500 text-sm'>
+                <div className='flex-shrink flex flex-row justify-center'>
                     {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
                     <div className=''>
-                        <button className='border p-1'
+                        <button className='border-1 p-2 rounded-xl border-gray-300/50'
                             onClick={ () => (paragraphUrl.length
                                         && handleClickMinimize()) }>
                             {!isMinimized ? svgChevronDown : svgChevronUp}
@@ -455,43 +468,78 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
 
                 {/* ========== BOOKMARK TOOLBAR ==========*/}
-                <div className={`${isMinimized && 'hidden'} w-full flex flex-row text-sm`}>
-                    <button className='grow border p-1 hover:bg-yellow-500'
+                <div className={`${isMinimized ? 'hidden' :''}
+                    border border-gray-300/50 divide-solid divide-x-6
+                    divide-gray-400 mb-4 w-full flex flex-row text-sm`}>
+                    <button className='basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickClearBookmarks} >
                         Clear Latest</button>
-
-                    <button className='grow border p-1 hover:bg-fuchsia-500'
+                    <button className='basis-md p-1 hover:bg-fuchsia-500/50'
                         onClick={handleClickGetBookmarkLatest} >
                         Go Latest</button>
 
-
-                    <button className='grow border p-1 hover:bg-yellow-500'
+                    <button className='basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickSetBookmarkLatest} >
                         Mark Latest</button>
                 </div>
+
+
 
 
                 {/* ========= MAIN TEXT ========== */}
                 <div className={['flex flex-col grow',
                     isMinimized ? 'hidden' : ''].join(' ')}
                     onKeyDown={e=>handleKey(e)} tabIndex="0">
-                    <div className={`grow w-full bg-zinc-800 md:w-4/10
-                        overflow-scroll place-self-center border p-5`}>
-                        <h2>{ heading }</h2>
-                        <p className={classesMainText}>
-                            { mainText }
-                        </p>
+                    <div id="graze-main-text" className='relative flex flex-row h-full bg-zinc-800 justify-between align-center'>
+                         <button className='flex-shrink bg-zinc-700/50 self-start self-stretch flex flex-col justify-around align-center'
+                            onClick={getPrevMainText}>
+                            {svgChevronLeft}</button>
+
+                        <div className={`h-full w-full lg:w-4/10 bg-zinc-800
+                            overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
+                            <h3 className='mb-8'>{ heading }</h3>
+                            <p className={classesMainText}>
+                                { mainText }
+                            </p>
+                        </div>
+                  {/* PROGRESS BARS */}
+                    <div className='absolute bottom-0 right-10'>
+                        <div className='grow flex flex-col-reverse justify-center '>
+                            <div className='w-full flex flex-row justify-center static'>
+                                <progress className='grow bg-zinc-700/50'
+                                    value={charIndex/charLength} />
+                                <span className='text-xs text-black fixed text-zinc-300'>
+                                    {`${charIndex}/${charLength-1}`}</span>
+                            </div>
+                            <div className='w-full flex flex-row justify-center static'>
+                                <progress className='grow bg-zinc-700/50'
+                                    value={paragraphIndex/paragraphLength} />
+                                <span className='text-xs text-black fixed text-zinc-300'>
+                                    {`${paragraphIndex}/${paragraphLength-1}`}</span>
+                            </div>
+                            <div className='w-full flex flex-row justify-center static'>
+                                <progress className='grow bg-zinc-700/50'
+                                    value={partIndex/partLength} />
+                                <span className='text-xs text-black fixed text-zinc-300'>
+                                    {`${partIndex}/${partLength-1}`}</span>
+                            </div>
+                        </div>
+                    </div>
+                        <button className='flex-shrink bg-zinc-700/50 flex flex-col justify-around align-center'
+                            onClick={getNextMainText}>
+                            {svgChevronRight}</button>
+
                     </div>
                 </div>
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
-                <div className={['grid grid-rows-3 gap-4',
+                <div className={['pl-4 pr-4 pb-4 pt-2 bg-black flex flex-row justify-between align-center mt-4',
                     'text-sm', isMinimized ? 'hidden' : ''].join(' ') }>
 
 
                     {/* WordInterval Controls */}
-                    <div className='grid grid-cols-1 justify-self-start place-items-center'>
+                    <div className='basis-sm flex flex-col justify-center'>
                         <label for='charInterval'># chars:
                             <input name='charIntervalInput' type='number'
                                 min='10' max='1000' value={charInterval}
@@ -501,17 +549,17 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
 
                     {/* Auto Controls */}
-                    <div className="w-full flex flex-row justify-center">
-                        <div className='basis-xs'>
-                            <label for='delay'>time(ms):
+                    <div className="basis-md flex flex-row justify-between align-center">
+                        <div className='basis-sm flex flex-col text-center justify-center'>
+                            <label className='' for='delay'>time(ms):
                                 <input type='number' name='delayInput'
                                     value={delay} min="200" max="60000"
                                     onChange={e=>handleDelayChange(e)} />
                             </label>
                         </div>
-                        <button className={`basis-xs outline-2 outline-offset-2
-                            outline-blue-500 border border-gray-300 px-4
-                            py-2 text-sm font-semibold text-gray-700
+                        <button className={`basis-md outline-1 outline-offset-1
+                            outline-slate-800/70 border border-gray-300 px-4
+                            py-2 text-sm font-semibold text-gray-800
                             dark:border-transparent dark:bg-gray-700
                             dark:text-gray-200`}
                             onClick={handleClickPause}> {/* TODO */}
@@ -521,14 +569,15 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
                     {/* TODO Location Controls */}
                     <form method="post" onSubmit={handleSubmitSettings}
-                        className="w-full flex flex-row justify-center " >
-                        <div className='basis-xs flex flex-row justify-center'>
+                        className="basis-md flex flex-col text-end justify-center" >
+                        <div className='contents'>
                             <label for='paragraph'>¶:
                                 <input type='number' name='paragraphIndexInput'
                                     min='0' max={paragraphLength}
                                     onChange={e=>handleLocationChange(e)} />
-                            </label>
+
                             <span>{ `/${paragraphLength}` }</span>
+                            </label>
                         </div>
                         {/* TODO set max after selecting part and paragraph */}
                         {/*
@@ -547,25 +596,6 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     </form>
 
 
-                    {/* Seek Controls */}
-                    <div className='flex flex-row'>
-                        <button className='w-1/10 border' onClick={getPrevMainText}>back</button>
-                        <div className='w-8/10 flex flex-col'>
-                            <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow' value={charIndex/charLength} />
-                                <span className='text-sm text-black fixed'>{`${charIndex}/${charLength-1}`}</span>
-                            </div>
-                            <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow' value={paragraphIndex/paragraphLength} />
-                                <span className='text-sm text-black fixed'>{`${paragraphIndex}/${paragraphLength-1}`}</span>
-                            </div>
-                            <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow' value={partIndex/partLength} />
-                                <span className='text-sm text-black fixed'>{`${partIndex}/${partLength-1}`}</span>
-                            </div>
-                        </div>
-                        <button className='w-1/10 border' onClick={getNextMainText}>fwrd</button>
-                    </div>
 
 
                 </div>

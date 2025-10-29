@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from '@pages/main/App';
-import '@pages/main/app_style.css';
+import '@pages/main/index.css';
 import '@assets/styles/tailwind.css';
 
 function init() {
