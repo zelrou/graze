@@ -1,6 +1,6 @@
 import {
     useState, useEffect, useEffectEvent, createContext, useContext,
-    memo, useMemo
+    memo, useMemo, useRef
 } from 'react';
 
 const DEFAULTS = {};
@@ -31,7 +31,7 @@ const SearchResultTableRow = ({match}) => {
         </tr>)
 }
 
-const SearchResultTable = memo(({searchResults}) => {
+const SearchResultTable = memo(({searchResults, paragraphUrl}) => {
     const tableRows = searchResults.map(searchResult=>(
         <SearchResultTableRow match={searchResult} />))
     return (<table className=''>
@@ -52,8 +52,15 @@ function* genParagraphs(sw) {
     }
 }
 
-const SearchContainer = ({structuredWork}) => {
+const SearchContainer = ({structuredWork, paragraphUrl}) => {
     const [searchQuery, setSearchQuery] = useState('')
+    const [prevParagraphUrl, setPrevParagraphUrl] = useState()
+    const searchInputRef = useRef(null)
+    if (paragraphUrl !== prevParagraphUrl) {
+        setPrevParagraphUrl(paragraphUrl)
+        setSearchQuery('')
+        if (searchInputRef.current) searchInputRef.current.value = ''
+    }
     const contextLen = 40;
     let prevQ = ''
     const searchResults = useMemo(() => {
@@ -61,10 +68,11 @@ const SearchContainer = ({structuredWork}) => {
         if (prevQ == q) return [];
         const rQ = new RegExp(q, 'gid')
         const res = []
+        console.log('starting search', paragraphUrl, rQ);
         for (let paragraph of genParagraphs(structuredWork)) {
-            console.log(paragraph)
+            //console.log(paragraph)
             const target = paragraph[2]
-            console.log('searching target,query', target, rQ)
+            // console.log('searching target,query', target, rQ)
             const matches = target.matchAll(rQ)
             for (const match of matches) {
                 const startMatch = match.index
@@ -72,7 +80,7 @@ const SearchContainer = ({structuredWork}) => {
                 const ctxStart = Math.max(0,startMatch-contextLen)
                 const ctxEnd = endMatch + contextLen
                 const contextMatch = match.input.slice(ctxStart, ctxEnd)
-                console.log(target, paragraph)
+                // console.log(target, paragraph)
                 const m = [paragraph[0],paragraph[1],startMatch,contextMatch]
                 res.push(m)
             }
@@ -96,10 +104,10 @@ const SearchContainer = ({structuredWork}) => {
         <form method='post' onSubmit={handleSubmitSearch}>
             <input name='query' type='text' minLength={4} maxLength={20}
                 className='bg-[#4f7777fc] focus:outline-2'
-                onChange={handleQueryChange} autoFocus />
+                onChange={handleQueryChange} ref={searchInputRef} autoFocus />
             <button className='border bg-sky-500 hover:bg-sky-700'> Search</button>
         </form>
-        <SearchResultTable searchResults={searchResults} />
+        <SearchResultTable searchResults={searchResults} paragraphUrl={paragraphUrl}/>
     </>)
 }
 
@@ -433,7 +441,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             {/* ========== SEARCH RESULTS ==========*/}
             <div className={isOpenSearchContainer ? 'flex flex-col flex-shrink align-center overflow-scroll relative' : 'hidden'}>
                 <SetLocationContext value={{setLocation}}>
-                    <SearchContainer structuredWork={structuredWork}/>
+                    <SearchContainer paragraphUrl={paragraphUrl} structuredWork={structuredWork}/>
                 </SetLocationContext>
             </div>
 
