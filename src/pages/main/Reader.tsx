@@ -418,7 +418,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             border-2 border-gray-300/50
             rounded-sm bg-zinc-900 relative align-start justify-start`,
             isMinimized ? 'w-fit' : 'sm:w-screen lg:w-7/10',
-            isMinimized ? 'h-full' : 'lg:h-7/10 h-full',
+            isMinimized ? 'h-full' : 'h-screen sm:h-screen lg:h-[70vh] ',
             isMinimized ? 'place-self-start' : 'place-self-center'
             ].join(' ') }>
 
@@ -458,7 +458,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                 </SetLocationContext>
             </div>
 
-            <div className={!isOpenSearchContainer ? 'grow flex flex-col' : 'hidden'}>
+            <div className={!isOpenSearchContainer ? 'contents h-full' : 'hidden'}>
                 {/* ========== WORK AUTHOR TITLE BAR ==========*/}
                 <div className='flex flex-row w-full justify-around'>
                     <h1 className='font-bold'>{structuredWork.author || '' }</h1>
@@ -487,15 +487,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
 
                 {/* ========= MAIN TEXT ========== */}
-                <div className={['flex flex-col grow',
-                    isMinimized ? 'hidden' : ''].join(' ')}
-                    onKeyDown={e=>handleKey(e)} tabIndex="0">
-                    <div id="graze-main-text" className='relative flex flex-row h-full bg-zinc-800 justify-between align-center'>
-                         <button className='flex-shrink bg-zinc-700/50 self-start self-stretch flex flex-col justify-around align-center'
+                    <div id="graze-main-text"
+                        className={`relative flex flex-row h-8/10 shrink-0 grow-0 bg-zinc-800
+                        ${isMinimized ? 'hidden' : ''}
+                        justify-between align-center`}
+                        onKeyDown={e=>handleKey(e)} tabIndex="0">
+                        <button className='flex-shrink bg-zinc-700/50 self-start self-stretch flex flex-col justify-around align-center'
                             onClick={getPrevMainText}>
                             {svgChevronLeft}</button>
 
-                        <div className={`h-full w-full lg:w-4/10 bg-zinc-800
+                        <div className={`flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
                             overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
                             <h3 className='mb-8'>{ heading }</h3>
                             <p className={classesMainText}>
@@ -503,23 +504,23 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                             </p>
                         </div>
                   {/* PROGRESS BARS */}
-                    <div className='absolute bottom-0 right-10'>
-                        <div className='grow flex flex-col-reverse justify-center '>
-                            <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow bg-zinc-700/50'
-                                    value={charIndex/charLength} />
+                    <div className='absolute bottom-0 right-10 h-2/10 w-2/10 md:h-1/10 md:w-1/10 sm:h-2/10 sm:w-2/10'>
+                        <div className='h-full grow flex flex-col-reverse justify-center '>
+                            <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
+                                <div className='bg-red-500/50'
+                                    style={{width: `${charIndex/charLength*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${charIndex}/${charLength-1}`}</span>
                             </div>
-                            <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow bg-zinc-700/50'
-                                    value={paragraphIndex/paragraphLength} />
+                            <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
+                                <div className='bg-green-500/50'
+                                    style={{width: `${paragraphIndex/paragraphLength*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${paragraphIndex}/${paragraphLength-1}`}</span>
                             </div>
-                            <div className='w-full flex flex-row justify-center static'>
-                                <progress className='grow bg-zinc-700/50'
-                                    value={partIndex/partLength} />
+                            <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
+                                <div className='bg-blue-500/50'
+                                    style={{width: `${partIndex/partLength*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${partIndex}/${partLength-1}`}</span>
                             </div>
@@ -530,7 +531,6 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                             {svgChevronRight}</button>
 
                     </div>
-                </div>
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
