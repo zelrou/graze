@@ -510,7 +510,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         <div className={['fixed z-0 left-0',
             'grid',
             isMinimized ? 'bottom-0' : 'top-0',
-            isMinimized ? 'bg-transparent' :'bg-[#22222266]',
+            isMinimized ? 'bg-transparent' :'bg-zinc-950/80',
             isMinimized ? 'w-xs' : 'w-screen',
             isMinimized ? 'h-20' : 'h-screen'
             ].join(' ')
@@ -531,10 +531,10 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
                 <div className='flex-shrink flex flex-row flex-shrink justify-center'>
-                    <button className='border-1 p-2 rounded-xl border-gray-300/50'
+                    {!isMinimized && <button className='border-1 p-2 rounded-xl border-gray-300/50'
                         onClick={handleClickOpenSearchContainer}>
                         { !isOpenSearchContainer ? svgMagnifyingGlass : 'Back' }
-                    </button>
+                    </button>}
                 </div>
 
                 {/* ---------- WINDOW TITLE ---------- */}
@@ -545,11 +545,12 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                 <div className='flex-shrink flex flex-row justify-center'>
                     {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
                     <div className=''>
+                        {paragraphUrl &&
                         <button className='border-1 p-2 rounded-xl border-gray-300/50'
                             onClick={ () => (paragraphUrl.length
                                         && handleClickMinimize()) }>
                             {!isMinimized ? svgChevronDown : svgChevronUp}
-                        </button>
+                        </button>}
                     </div>
                 </div>
             </div>
@@ -590,23 +591,27 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
 
                 {/* ========= MAIN TEXT ========== */}
-                    <div id="graze-main-text"
-                        className={`relative flex flex-row md:h-8/10 h-7/10 shrink-0 grow-0 bg-zinc-800
-                        ${isMinimized ? 'hidden' : ''}
-                        justify-between align-center`}
-                        onKeyDown={e=>handleKey(e)} tabIndex="0">
-                        <button className='flex-shrink bg-zinc-700/50 self-start self-stretch flex flex-col justify-around align-center'
-                            onClick={getPrevMainText}>
-                            {svgChevronLeft}</button>
+                <div id="graze-main-text"
+                    className={`relative flex flex-row md:h-8/10 h-7/10 shrink-0 grow-0 bg-zinc-800
+                    ${isMinimized ? 'hidden' : ''}
+                    justify-between align-center`}
+                    onKeyDown={e=>handleKey(e)} tabIndex="0">
 
-                        <div className={`flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
-                            overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
-                            <h3 className='mb-8'>{ heading }</h3>
-                            <p className={classesMainText}>
-                                { mainText }
-                            </p>
-                        </div>
-                  {/* PROGRESS BARS */}
+                    {/* SEEK LEFT BUTTON */}
+                    <button className='flex-shrink bg-zinc-700/50 self-start self-stretch flex flex-col justify-around align-center'
+                        onClick={getPrevMainText}>
+                        {svgChevronLeft}</button>
+
+                    {/* MAIN TEXT */}
+                    <div className={`flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
+                        overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
+                        <h3 className='mb-8'>{ heading }</h3>
+                        <p className={classesMainText}>
+                            { mainText }
+                        </p>
+                    </div>
+
+                    {/* PROGRESS BARS (FLOATING) */}
                     <div className='absolute bottom-0 right-10 h-2/10 w-2/10 md:h-1/10 md:w-1/10 sm:h-2/10 sm:w-2/10'>
                         <div className='h-full grow flex flex-col-reverse justify-center '>
                             <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
@@ -629,11 +634,13 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                             </div>
                         </div>
                     </div>
-                        <button className='flex-shrink bg-zinc-700/50 flex flex-col justify-around align-center'
-                            onClick={getNextMainText}>
-                            {svgChevronRight}</button>
 
-                    </div>
+                    {/* SEEK RIGHT BUTTON */}
+                    <button className='flex-shrink bg-zinc-700/50 flex flex-col justify-around align-center'
+                        onClick={getNextMainText}>
+                        {svgChevronRight}</button>
+
+                </div>
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
@@ -670,7 +677,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     </div>
 
 
-                    {/* TODO Location Controls */}
+                    {/* Location Form */}
+                    {/* TODO Update Location Context w these props */}
                     <SetLocationContext value={{setLocation}}>
                         <LocationForm
                             structuredWork={structuredWork}

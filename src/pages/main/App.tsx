@@ -4,6 +4,9 @@ import {
     useState, useEffect
 } from 'react';
 
+const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+</svg>)
 
 const blacklistProtocol = ['about:', 'moz-extension:']
 const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
@@ -185,11 +188,12 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
             : 0
         return (
             <tr key={t.id}>
-                <td>{t.url}</td>
-                <td>{sIdx}.{pIdx}.{cIdx}</td>
-                <td><button className='border'
+                <td className='border-b p-2 border-gray-300 font-sans'>{t.title}</td>
+                <td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>
+                <td className='border-b p-2 border-gray-300 text-right font-mono'>{sIdx}.{pIdx}.{cIdx}</td>
+                <td className='border-b p-2 border-gray-300'><button className=''
                     onClick={() => sendMessageToTab(t.id)}>
-                    read</button></td>
+                    {svgArrowRightCircle}</button></td>
             </tr>) })
 }
 
@@ -208,18 +212,26 @@ const PrevUrlList = ({tabs, latestMarks}) => {
             }
         }
     }
-    return prevTabs.length && prevTabs.map(pt => {
+    return !prevTabs.length ? null : prevTabs.map(pt => {
         return Object.keys(latestMarks).length && (
             <tr key={pt.url}>
-                <td>{pt.url}</td>
-                <td>{pt.pIdx}, {pt.cIdx}</td>
-                <td><button className='border'
-                    onClick={() => null}>
+                <td className='border-b p-2 border-gray-300 font-sans'>{pt.url}</td>
+                <td className='border-b p-2 border-gray-300 text-right font-mono'>{pt.sIdx}{pt.pIdx}.{pt.cIdx}</td>
+                <td className='border-b p-2 border-gray-300'><button className='border'
+                    onClick={() => browser.tabs.create({url:pt.url})}>
                     read</button></td>
             </tr>) })
 }
 
 
+async function setClipboard(text="yooo") {
+  const type = "text/plain";
+  const clipboardItemData = {
+    [type]: text,
+  };
+  const clipboardItem = new ClipboardItem(clipboardItemData);
+  await navigator.clipboard.write([clipboardItem]);
+}
 
 export default function App () {
     console.log('App didMount')
@@ -248,28 +260,40 @@ export default function App () {
 
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
-    return (<div className='w-screen h-screen flex flex-col items-center bg-black text-white'>
-        <h1>Graze</h1>
-        <h2>Open Tabs</h2>
-        <table className='table-auto md:w-5/10'>
-            <thead><tr>
-                <th>Url</th>
-                <th>Location</th>
-                <th>Read</th>
+    return (<div className='w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
+        <div className='flex flex-col w-screen bg-zinc-800'>
+            <div className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
+                <h1 className='col-span-1 col-start-2 text-center text-xl text-bold'>Graze</h1>
+                <div className='col-span-1 justify-self-end flex flex-row space-x-4 justify-between text-center text-sm'>
+                    <button
+                        className='basis-xs border-gray-300 text-mono'
+                        onClick={()=>setClipboard(JSON.stringify(localStorage))}>
+                        export</button>
+                    <a className='basis-xs self-center' href='github.com'>github</a>
+                </div>
+            </div>
+        </div>
+        <h2 className='text-lg text-semibold'>Open Tabs</h2>
+        <table className='table-auto md:w-7/10 bg-zinc-800 border-gray-300/50 border-4'>
+            <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
+                <th className='p-2'>TITLE</th>
+                <th className='p-2'>URL</th>
+                <th className='p-2 text-right'>LOCATION</th>
+                <th></th>
             </tr></thead>
-            <tbody>
+            <tbody className='text-left'>
                 <UrlList
                     tabs={ tabs }
                     setReaderUrl={ setReaderUrl }
                     latestMarks={ localStorage } />
             </tbody>
         </table>
-        <h2>Previous Tabs</h2>
-        <table className='table-auto md:w-5/10'>
+        <h2 className='text-lg text-semibold'>Previous Tabs</h2>
+        <table className='table-auto md:w-7/10'>
             <thead><tr>
                 <th>Url</th>
                 <th>Location</th>
-                <th>Read</th>
+                <th></th>
             </tr></thead>
             <tbody>
                 <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
