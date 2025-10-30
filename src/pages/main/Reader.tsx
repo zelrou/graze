@@ -122,6 +122,122 @@ const SearchContainer = ({structuredWork, paragraphUrl}) => {
     </>)
 }
 
+const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePaused}) => {
+    const { setLocation } = useContext(SetLocationContext)
+    const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
+    const [prevSIdx, setPrevSIdx] = useState(null)
+    const [prevPIdx, setPrevPIdx] = useState(null)
+    const [prevCIdx, setPrevCIdx] = useState(null)
+    const [_sIdx, set_sIdx] = useState(0)
+    const [_pIdx, set_pIdx] = useState(0)
+    const [_cIdx, set_cIdx] = useState(0)
+
+    const handleLocationChange = e => {
+        e.stopPropagation();
+        togglePaused(true);
+        console.log(e.target)
+        const newVal = e.target.value
+        switch(e.target.name) {
+            case 'partIndexInput':
+                set_sIdx(newVal)
+                set_pIdx(0)
+                set_cIdx(0)
+                break
+            case 'paragraphIndexInput':
+                set_pIdx(newVal)
+                set_cIdx(0)
+                break
+            case 'charIndexInput':
+                set_cIdx(newVal)
+                break
+            default:
+                break
+        }
+    }
+
+    const handleSubmitSettings = e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const form = e.target;
+        const formData = new FormData(form);
+        console.log(formData);
+        const formJson = Object.fromEntries(formData)
+        const s = Number(formJson.partIndexInput)
+        const p = Number(formJson.paragraphIndexInput)
+        const c = Number(formJson.charIndexInput)
+        setLocation(s,p,c)
+    }
+
+    let partLength, paragraphLength, charLength;
+    if (paragraphUrl !== prevParagraphUrl) {
+        console.log('url change')
+        setPrevParagraphUrl(paragraphUrl)
+        set_sIdx(0)
+        set_pIdx(0)
+        set_cIdx(0)
+        partLength = structuredWork.parts.length
+        paragraphLength = structuredWork.parts[0].paragraphs.length
+        charLength = structuredWork.parts[0].paragraphs[0].length
+    } else if (paragraphUrl) {
+        console.log('same url')
+        if (prevSIdx !== sIdx) {
+            setPrevSIdx(sIdx)
+            set_sIdx(sIdx)
+        }
+        if (prevPIdx !== pIdx) {
+            setPrevPIdx(pIdx)
+            set_pIdx(pIdx)
+        }
+        if (prevCIdx !== cIdx) {
+            setPrevCIdx(cIdx)
+            set_cIdx(cIdx)
+        }
+        partLength = structuredWork.parts.length
+        paragraphLength = structuredWork.parts[_sIdx].paragraphs.length
+        charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
+    }
+
+    return (<form method="post" onSubmit={handleSubmitSettings}
+        className="basis-md flex flex-row text-end justify-center" >
+        <div className='contents'>
+            <label for='part'>S:
+                <input type='number' name='partIndexInput'
+                    className='border'
+                    min='0' max={partLength-1}
+                    value={_sIdx}
+                    onChange={e=>handleLocationChange(e)} />
+
+            <span>{ `/${partLength-1}` }</span>
+            </label>
+        </div>
+        <div className='contents'>
+            <label for='paragraph'>¶:
+                <input type='number' name='paragraphIndexInput'
+                    className='border'
+                    min='0' max={paragraphLength-1}
+                    value={_pIdx}
+                    onChange={e=>handleLocationChange(e)} />
+
+            <span>{ `/${paragraphLength-1}` }</span>
+            </label>
+        </div>
+        <div className='contents'>
+            <label for='paragraph'>C:
+                <input type='number' name='charIndexInput'
+                    className='border'
+                    min='0' max={charLength-1}
+                    value={_cIdx}
+                    onChange={e=>handleLocationChange(e)} />
+
+            <span>{ `/${charLength-1}` }</span>
+            </label>
+        </div>
+        <button type="submit"
+           className='bg-indigo-500 hover:bg-fuchsia-500'>
+           go </button>
+    </form>)
+}
+
 export default function Reader({paragraphUrl, structuredWork, setLocalStorage }) {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isStorageInitialized, setIsStorageInitialized] = useState(false);
@@ -140,10 +256,11 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
     /* ========== SEARCH STATE & LOCATION CONTEXT ========== */
     const [isOpenSearchContainer, setIsOpenSearchContainer] = useState(false)
-    const setLocation = (s, p, c) => {
-        setPartIndex(s)
-        setParagraphIndex(p)
-        setCharIndex(c)
+    const setLocation = (s=null, p=null, c=null) => {
+        if (!s && !p && !c) return null
+        if (s) setPartIndex(s)
+        if (p) setParagraphIndex(p)
+        if (c) setCharIndex(c)
     }
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
@@ -333,21 +450,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         setDelay(e.target.value);
     }
 
-    const handleLocationChange = e => {
-        e.stopPropagation();
-        if (!isPaused) togglePaused(true);
-    }
 
-    const handleSubmitSettings = e => {
-        e.preventDefault();
-        e.stopPropagation();
-        const form = e.target;
-        const formData = new FormData(form);
-        console.log(formData);
-        const formJson = Object.fromEntries(formData)
-        setParagraphIndex(Number(formJson.paragraphIndexInput || paragraphIndex))
-        setCharIndex(Number(formJson.charIndexInput || 0));
-    }
 
     /* ========== STORAGE FUNCS =========== */
     const setStorageBookmarkLatest = async () => {
@@ -568,34 +671,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
 
                     {/* TODO Location Controls */}
-                    <form method="post" onSubmit={handleSubmitSettings}
-                        className="basis-md flex flex-col text-end justify-center" >
-                        <div className='contents'>
-                            <label for='paragraph'>¶:
-                                <input type='number' name='paragraphIndexInput'
-                                    min='0' max={paragraphLength}
-                                    onChange={e=>handleLocationChange(e)} />
-
-                            <span>{ `/${paragraphLength}` }</span>
-                            </label>
-                        </div>
-                        {/* TODO set max after selecting part and paragraph */}
-                        {/*
-                        <div className='basis-xs flex flex-row justify-center'>
-                            <label for='word'>c:
-                                <input type='number' name='charIndexInput'
-                                    min='0' max={100}
-                                    onChange={e=>handleLocationChange(e)} />
-                            </label>
-                            <span> { `/${charLength}` } </span>
-                        </div>
-                        <button type="submit"
-                           className='basis-xs bg-indigo-500 hover:bg-fuchsia-500'>
-                           go </button>
-                       */}
-                    </form>
-
-
+                    <SetLocationContext value={{setLocation}}>
+                        <LocationForm
+                            structuredWork={structuredWork}
+                            paragraphUrl={paragraphUrl}
+                            sIdx={partIndex}
+                            pIdx={paragraphIndex}
+                            cIdx={charIndex}
+                            togglePaused={togglePaused}
+                        />
+                    </SetLocationContext>
 
 
                 </div>
