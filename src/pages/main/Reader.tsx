@@ -488,7 +488,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
                 {/* ========= MAIN TEXT ========== */}
                     <div id="graze-main-text"
-                        className={`relative flex flex-row h-8/10 shrink-0 grow-0 bg-zinc-800
+                        className={`relative flex flex-row md:h-8/10 h-7/10 shrink-0 grow-0 bg-zinc-800
                         ${isMinimized ? 'hidden' : ''}
                         justify-between align-center`}
                         onKeyDown={e=>handleKey(e)} tabIndex="0">
