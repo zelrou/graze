@@ -4,9 +4,15 @@ import {
     useState, useEffect
 } from 'react';
 
+import logo from '@assets/img/logo.svg';
+
 const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 </svg>)
+const svgClipboard = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z" />
+</svg>)
+
 
 const blacklistProtocol = ['about:', 'moz-extension:']
 const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
@@ -70,39 +76,6 @@ const useTabStore = () => {
     console.log('useTabStore ends')//, tabs);
     return tabs
 }
-
-/* ========== STORAGE FUNCS =========== */
-
-/*
-const setStorageBookmarkLatest = async () => {
-    console.log('setStorageBookmarkLatest');
-    const res = await browser.storage.local.set({
-        [paragraphUrl]: { pIdx: paragraphIndex, cIdx: charIndex }
-    })
-    console.log('setStorageMarkOK', res)
-}
-
-const handleClickSetBookmarkLatest = async (e) => {
-    e.preventDefault();
-    return setStorageBookmarkLatest();
-}
-
-const handleClickGetBookmarkLatest = async (e) => {
-    e.preventDefault();
-    if (!isPaused) togglePaused(true);
-    let res = await browser.storage.local.get(paragraphUrl)
-    if (res) { res = res[paragraphUrl]; }
-    console.log('handleClickGetBookmarkLatest', res);
-    if (res && (res.pIdx !== paragraphIndex)) {
-        setParagraphIndex(res.pIdx);
-    }
-    if (res && (res.cIdx !== charIndex)) {
-        setCharIndex(res.cIdx);
-    }
-}
-*/
-
-
 
 const useLocalStorage = () => {
     const [stateLocalStorage, setStateLocalStorage] = useState({});
@@ -173,7 +146,7 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
         setReaderUrl(targetTab.url)
     }
     //console.log('urlList latestMarks:', latestMarks)
-    return tabs.length && tabs.map(t => {
+    return !tabs.length ? null : tabs.map(t => {
         const sIdx = (latestMarks.hasOwnProperty(t.url)
             && latestMarks[t.url].hasOwnProperty('sIdx'))
             ? latestMarks[t.url].sIdx
@@ -263,12 +236,13 @@ export default function App () {
     return (<div className='w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
         <div className='flex flex-col w-screen bg-zinc-800'>
             <div className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
-                <h1 className='col-span-1 col-start-2 text-center text-xl text-bold'>Graze</h1>
-                <div className='col-span-1 justify-self-end flex flex-row space-x-4 justify-between text-center text-sm'>
+                <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />
+                {/*<h1 className='col-span-1 col-start-2 text-center text-xl text-bold'></h1>*/}
+                <div className='col-start-3 col-span-1 justify-self-end flex flex-row space-x-4 justify-between text-center text-sm'>
                     <button
                         className='basis-xs border-gray-300 text-mono'
                         onClick={()=>setClipboard(JSON.stringify(localStorage))}>
-                        export</button>
+                        {svgClipboard}export</button>
                     <a className='basis-xs self-center' href='github.com'>github</a>
                 </div>
             </div>
