@@ -251,19 +251,13 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
 
 export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused}) {
-    const [isInitialized, setIsInitialized] = useState(false);
-    const [isStorageInitialized, setIsStorageInitialized] = useState(false);
     const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
     const [fontSize, setFontSize] = useState(1.5);
 
-    const [clock, setClock] = useState(0);
     const [delay, setDelay] = useState(DEFAULTS.DELAY);
-
-    const [markLatestPIdx, setMarkLatestPIdx] = useState(0)
-    const [markLatestCIdx, setMarkLatestCIdx] = useState(0)
 
     /* ========== SEARCH STATE & LOCATION CONTEXT ========== */
     const [isOpenSearchContainer, setIsOpenSearchContainer] = useState(false)

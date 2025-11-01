@@ -214,7 +214,6 @@ export default function App () {
     const tabs = useTabStore();
     console.log('App prelocalStorage')
     const [localStorage, setLocalStorage] = useLocalStorage();
-    //const [tabsUrls, setTabsUrls] = useState([])
     console.log('App preReaderUrl')
     const [readerUrl, setReaderUrl] = useState('');
     const [isMinimized, setIsMinimized] = useState(true);
