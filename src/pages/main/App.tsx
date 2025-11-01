@@ -15,6 +15,14 @@ const svgClipboard = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 const svgWindow = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.25V18a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 21 18V8.25m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v2.25m-18 0h18M5.25 6h.008v.008H5.25V6ZM7.5 6h.008v.008H7.5V6Zm2.25 0h.008v.008H9.75V6Z" />
 </svg>)
+const svgArrowTopRightOnSquare = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+</svg>)
+const svgXMark = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+</svg>)
+
+
 
 
 const blacklistProtocol = ['about:', 'moz-extension:']
@@ -175,13 +183,18 @@ const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) =
 
 /* ========== PREV TAB LIST ========== */
 const PrevUrlList = ({tabs, latestMarks}) => {
+    const handleClickRemovePreviousTab = async (e, url) => {
+        e.preventDefault()
+        return browser.storage.local.remove(url)
+    }
     const tabUrlList = tabs.map(t=>t.url)
     console.log('PrevUrlList') //,'latestMarks', latestMarks)
     const prevTabs = []
     if (Object.keys(latestMarks).length) {
         for (let [url, urlData] of Object.entries(latestMarks)) {
             if (!tabUrlList.includes(url)) {
-                if ((urlData.hasOwnProperty('pIdx') && urlData.pIdx > 0)
+                if ((urlData.hasOwnProperty('sIdx') && urlData.sIdx > 0)
+                    || (urlData.hasOwnProperty('pIdx') && urlData.pIdx > 0)
                     || (urlData.hasOwnProperty('cIdx') && urlData.cIdx > 0) ) {
                         prevTabs.push({url, ...urlData})
                 }
@@ -192,10 +205,11 @@ const PrevUrlList = ({tabs, latestMarks}) => {
         return Object.keys(latestMarks).length && (
             <tr key={pt.url}>
                 <td className='border-b p-2 border-gray-300 font-sans'>{pt.url}</td>
-                <td className='border-b p-2 border-gray-300 text-right font-mono'>{pt.sIdx}{pt.pIdx}.{pt.cIdx}</td>
-                <td className='border-b p-2 border-gray-300'><button className='border'
+                <td className='border-b p-2 border-gray-300 text-right font-mono'>{pt.sIdx}.{pt.pIdx}.{pt.cIdx}</td>
+                <td className='border-b p-2 border-gray-300'><button className=''
                     onClick={() => browser.tabs.create({url:pt.url})}>
-                    read</button></td>
+                    {svgArrowTopRightOnSquare}</button></td>
+                <td><button onClick={(e) => handleClickRemovePreviousTab(e, pt.url)}>{svgXMark}</button></td>
             </tr>) })
 }
 
@@ -268,6 +282,7 @@ export default function App () {
             <thead><tr>
                 <th>Url</th>
                 <th>Location</th>
+                <th></th>
                 <th></th>
             </tr></thead>
             <tbody>
