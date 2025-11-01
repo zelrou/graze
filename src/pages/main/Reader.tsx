@@ -24,6 +24,16 @@ const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" vi
 const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
 </svg>)
+const svgArrowTurnDownLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m7.49 12-3.75 3.75m0 0 3.75 3.75m-3.75-3.75h16.5V4.499" />
+</svg>)
+const svgPlay = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+</svg>)
+const svgPause = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+</svg>)
+
 
 
 const SetLocationContext = createContext(null)
@@ -197,57 +207,58 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
     }
 
-    return (<form method="post" onSubmit={handleSubmitSettings}
-        className="basis-md flex flex-row text-end justify-center" >
+    return (<div className='w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
+        <form method="post" onSubmit={handleSubmitSettings}
+        className='flex-shrink flex-grow-0 flex flex-row text-end justify-center'>
         <div className='contents'>
-            <label for='part'>S:
+            <label for='part'><span className='text-blue-300 font-semibold'>S:</span>
                 <input type='number' name='partIndexInput'
-                    className='border'
+                    className=''
                     min='0' max={partLength-1}
                     value={_sIdx}
                     onChange={e=>handleLocationChange(e)} />
 
-            <span>{ `/${partLength-1}` }</span>
+            <span className='mr-2'>{ `/${partLength-1}` }</span>
             </label>
         </div>
         <div className='contents'>
-            <label for='paragraph'>¶:
+            <label for='paragraph'><span className='text-green-300 font-semibold'>¶:</span>
                 <input type='number' name='paragraphIndexInput'
-                    className='border'
+                    className=''
                     min='0' max={paragraphLength-1}
                     value={_pIdx}
                     onChange={e=>handleLocationChange(e)} />
 
-            <span>{ `/${paragraphLength-1}` }</span>
+            <span className='mr-2'>{ `/${paragraphLength-1}` }</span>
             </label>
         </div>
         <div className='contents'>
-            <label for='paragraph'>C:
+            <label for='paragraph'><span className='text-red-300 font-semibold'>C:</span>
                 <input type='number' name='charIndexInput'
-                    className='border'
+                    className=''
                     min='0' max={charLength-1}
                     value={_cIdx}
                     onChange={e=>handleLocationChange(e)} />
 
-            <span>{ `/${charLength-1}` }</span>
+                <span className='mr-2'>{ `/${charLength-1}` }</span>
             </label>
         </div>
         <button type="submit"
            className='bg-indigo-500 hover:bg-fuchsia-500'>
-           go </button>
-    </form>)
+           {svgArrowTurnDownLeft}</button>
+    </form></div>)
 }
 
-export default function Reader({paragraphUrl, structuredWork, setLocalStorage }) {
+export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
+    handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused}) {
     const [isInitialized, setIsInitialized] = useState(false);
     const [isStorageInitialized, setIsStorageInitialized] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(true);
+    const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
-    const [partIndex, setPartIndex] = useState(0);
+    const [fontSize, setFontSize] = useState(1.5);
 
-    const [isPaused, togglePaused] = useState(true);
     const [clock, setClock] = useState(0);
     const [delay, setDelay] = useState(DEFAULTS.DELAY);
 
@@ -307,12 +318,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         return () => browser.runtime.onMessage.removeListener(bgReceiver);
     })
 
-    /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
-    const handleClickMinimize = () => {
-        console.log('handleClickMinimize', isMinimized)
-        if (!isMinimized) { setIsMinimized(true); }
-        else { setIsMinimized(false); }
-    };
+
 
     /* ========== SEEKING ========== */
     /* TODO structuredWork class
@@ -381,7 +387,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         }
     }
 
-    /* ========== AUTO SEEKING ========== */
+    /* ========== TOOLBAR BOTTOM CONTROLS========== */
+    {/* ---------- charInterval ---------- */}
     const handleCharIntervalChange = e => {
         console.log('handleCharIntervalChange', e, charInterval)
         e.preventDefault();
@@ -390,6 +397,22 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
         setCharInterval(charInterval => Number(e.target.value))
     }
 
+    {/* ---------- fontSize ---------- */}
+    const handleFontSizeChange = e => {
+        console.log('what')
+        if (!isPaused) togglePaused(isPaused => true)
+        e.preventDefault()
+        e.stopPropagation()
+        const size = e.target.value
+        console.log(size)
+        let _fontSize;
+        if (size < 0.75) { _fontSize = 0.75; }
+        else if (size > 8) { _fontSize = 8; }
+        else { _fontSize = size; }
+        setFontSize(_fontSize);
+    }
+
+    {/* ----------autoPlay ---------- */}
     const onTick = useEffectEvent(()=>{
         getNextMainText();
     });
@@ -498,10 +521,11 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
     /* ========== MAIN TEXT STYLE ========= */
     const classesMainText = [
-        'font-serif text-2xl indent-0 text-left md:px-20 text-zinc-200',
+        `font-serif indent-0 text-left md:px-20 text-zinc-200`,
         'text-balanced whitespace-normal break-normal place-self-center',
         /*`before:content-[${charIndex===0 ? "'P"+paragraphIndex+"'" : ''}]`*/
         ].join(' ')
+
 
     console.log('Reader prerender:')//, heading, structuredWork.parts[partIndex])
     return (
@@ -531,7 +555,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
                 <div className='flex-shrink flex flex-row flex-shrink justify-center'>
-                    {!isMinimized && <button className='border-1 p-2 rounded-xl border-gray-300/50'
+                    {!isMinimized && <button className='border-1 p-1 rounded-sm border-gray-300/0 hover:border-gray-300/50'
                         onClick={handleClickOpenSearchContainer}>
                         { !isOpenSearchContainer ? svgMagnifyingGlass : 'Back' }
                     </button>}
@@ -546,7 +570,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
                     <div className=''>
                         {paragraphUrl &&
-                        <button className='border-1 p-2 rounded-xl border-gray-300/50'
+                        <button className='border-1 p-1 rounded-sm border-gray-300/0 hover:border-gray-300/50'
                             onClick={ () => (paragraphUrl.length
                                         && handleClickMinimize()) }>
                             {!isMinimized ? svgChevronDown : svgChevronUp}
@@ -565,8 +589,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
             <div className={!isOpenSearchContainer ? 'contents h-full' : 'hidden'}>
                 {/* ========== WORK AUTHOR TITLE BAR ==========*/}
                 <div className='flex flex-row w-full justify-around'>
-                    <h1 className='font-bold'>{structuredWork.author || '' }</h1>
-                    <h1 className='italic'>{structuredWork.title || paragraphUrl}</h1>
+                    {!structuredWork.author ? null : <h1 className='font-bold'>{structuredWork.author}</h1>}
+                    {!structuredWork.title ? null : <h1 className='italic'>{structuredWork.title || paragraphUrl}</h1>}
                 </div>
 
 
@@ -577,14 +601,14 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     divide-gray-400 mb-4 w-full flex flex-row text-sm`}>
                     <button className='basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickClearBookmarks} >
-                        Clear Latest</button>
-                    <button className='basis-md p-1 hover:bg-fuchsia-500/50'
+                        Clear Progress</button>
+                    <button className='basis-md p-1 hover:bg-green-500/50'
                         onClick={handleClickGetBookmarkLatest} >
                         Go Latest</button>
 
-                    <button className='basis-md p-1 hover:bg-yellow-500/50'
+                    <button className='basis-md p-1 hover:bg-fuchsia-500/50'
                         onClick={handleClickSetBookmarkLatest} >
-                        Mark Latest</button>
+                        Set Progress</button>
                 </div>
 
 
@@ -606,7 +630,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     <div className={`flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
                         overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
                         <h3 className='mb-8'>{ heading }</h3>
-                        <p className={classesMainText}>
+                        <p style={{ fontSize: `${fontSize}rem`}} className={classesMainText}>
                             { mainText }
                         </p>
                     </div>
@@ -616,19 +640,19 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                         <div className='h-full grow flex flex-col-reverse justify-center '>
                             <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
                                 <div className='bg-red-500/50'
-                                    style={{width: `${charIndex/charLength*100}%`}}></div>
+                                    style={{width: `${charIndex/(charLength-1)*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${charIndex}/${charLength-1}`}</span>
                             </div>
                             <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
                                 <div className='bg-green-500/50'
-                                    style={{width: `${paragraphIndex/paragraphLength*100}%`}}></div>
+                                    style={{width: `${paragraphIndex/(paragraphLength-1)*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${paragraphIndex}/${paragraphLength-1}`}</span>
                             </div>
                             <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
                                 <div className='bg-blue-500/50'
-                                    style={{width: `${partIndex/partLength*100}%`}}></div>
+                                    style={{width: `${partIndex/(partLength-1)*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${partIndex}/${partLength-1}`}</span>
                             </div>
@@ -649,11 +673,22 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
 
 
                     {/* WordInterval Controls */}
-                    <div className='basis-sm flex flex-col justify-center'>
+                    <div className='flex-shrink flex flex-col justify-center'>
                         <label for='charInterval'># chars:
-                            <input name='charIntervalInput' type='number'
-                                min='10' max='1000' value={charInterval}
+                            <input style={{width: '5rem'}}
+                                name='charIntervalInput' type='number'
+                                min='10' max='1000'
+                                value={charInterval}
                                 onChange={e => handleCharIntervalChange(e)} />
+                        </label>
+                    </div>
+                    {/* fontSize Controls */}
+                    <div className='flex-shrink flex flex-col justify-center'>
+                        <label for='fontSize'>font size:
+                            <input style={{width: '4rem'}} name='fontSizeInput'
+                                type='number' min='0.75' max='8' step='any'
+                                value={fontSize}
+                                onChange={e => handleFontSizeChange(e)} />
                         </label>
                     </div>
 
@@ -661,19 +696,19 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage })
                     {/* Auto Controls */}
                     <div className="basis-md flex flex-row justify-between align-center">
                         <div className='basis-sm flex flex-col text-center justify-center'>
-                            <label className='' for='delay'>time(ms):
+                            <label className='' for='delay'>⏳(ms):
                                 <input type='number' name='delayInput'
                                     value={delay} min="200" max="60000"
                                     onChange={e=>handleDelayChange(e)} />
                             </label>
                         </div>
-                        <button className={`basis-md outline-1 outline-offset-1
+                        <button className={`basis-sm flex justify-center outline-1 outline-offset-1
                             outline-slate-800/70 border border-gray-300 px-4
                             py-2 text-sm font-semibold text-gray-800
                             dark:border-transparent dark:bg-gray-700
                             dark:text-gray-200`}
                             onClick={handleClickPause}> {/* TODO */}
-                            {isPaused ? 'play' : 'pause'}</button>
+                            {isPaused ? svgPlay : svgPause }</button>
                     </div>
 
 

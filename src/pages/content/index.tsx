@@ -21,6 +21,6 @@ browser.runtime.onMessage.addListener((request) => {
     return Promise.resolve({
         response: "Hi from content script",
         structuredWork
-});
+    });
 });
 

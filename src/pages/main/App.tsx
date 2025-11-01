@@ -12,6 +12,9 @@ const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none"
 const svgClipboard = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z" />
 </svg>)
+const svgWindow = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.25V18a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 21 18V8.25m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v2.25m-18 0h18M5.25 6h.008v.008H5.25V6ZM7.5 6h.008v.008H7.5V6Zm2.25 0h.008v.008H9.75V6Z" />
+</svg>)
 
 
 const blacklistProtocol = ['about:', 'moz-extension:']
@@ -134,7 +137,7 @@ const defaultStructuredWork = {
     parts: [{ heading:'', paragraphs:[''] }]
 }
 let structuredWork = defaultStructuredWork;
-const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
+const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) => {
     const sendMessageToTab = async tabId => {
         const tabResponse = await browser.tabs.sendMessage(tabId,
             { greeting: "Hi from background script" })
@@ -160,13 +163,13 @@ const UrlList = ({tabs, setReaderUrl, latestMarks}) => {
             ? latestMarks[t.url].cIdx
             : 0
         return (
-            <tr key={t.id}>
+            <tr key={t.id} className={readerUrl === t.url ? 'bg-emerald-300/40' : ''}>
                 <td className='border-b p-2 border-gray-300 font-sans'>{t.title}</td>
                 <td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>
                 <td className='border-b p-2 border-gray-300 text-right font-mono'>{sIdx}.{pIdx}.{cIdx}</td>
                 <td className='border-b p-2 border-gray-300'><button className=''
-                    onClick={() => sendMessageToTab(t.id)}>
-                    {svgArrowRightCircle}</button></td>
+                    onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
+                    {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
             </tr>) })
 }
 
@@ -197,7 +200,7 @@ const PrevUrlList = ({tabs, latestMarks}) => {
 }
 
 
-async function setClipboard(text="yooo") {
+async function setClipboard(text="<3") {
   const type = "text/plain";
   const clipboardItemData = {
     [type]: text,
@@ -214,22 +217,19 @@ export default function App () {
     //const [tabsUrls, setTabsUrls] = useState([])
     console.log('App preReaderUrl')
     const [readerUrl, setReaderUrl] = useState('');
-    /*
-    useEffect(()=>{
-        for (let tab of tabs) {
-            const { href } = URL.parse(tab.url);
-            const res = localStorage;
-            //console.log('useLocalStorageEffect tab loop', href, res);
-            if ( !isInBlacklist(tab.url)
-                && ( !res.hasOwnProperty(href)
-                || !res[href].hasOwnProperty('pIdx')
-                || !res[href].hasOwnProperty('cIdx') )) {
-                console.log('defaulting storageValue w params', tab, href, localStorage)
-                setLocalStorage(href, defaultStorageValue)
-            }
+    const [isMinimized, setIsMinimized] = useState(true);
+    const [isPaused, togglePaused] = useState(true)
+
+    /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
+    const handleClickMinimize = () => {
+        console.log('handleClickMinimize', isMinimized)
+        if (!isPaused) togglePaused(isPaused => true)
+        if (!isMinimized) { setIsMinimized(true);
+        } else {
+            setIsMinimized(false);
         }
-    }, [tabs, localStorage, setLocalStorage])
-    */
+    };
+
 
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
@@ -258,8 +258,10 @@ export default function App () {
             <tbody className='text-left'>
                 <UrlList
                     tabs={ tabs }
+                    readerUrl={ readerUrl }
                     setReaderUrl={ setReaderUrl }
-                    latestMarks={ localStorage } />
+                    latestMarks={ localStorage }
+                    setIsMinimized={setIsMinimized} />
             </tbody>
         </table>
         <h2 className='text-lg text-semibold'>Previous Tabs</h2>
@@ -276,7 +278,10 @@ export default function App () {
         <Reader
             paragraphUrl={ readerUrl }
             structuredWork={ structuredWork || defaultStructuredWork }
-            setLocalStorage={ setLocalStorage } />
+            setLocalStorage={ setLocalStorage }
+            isPaused={isPaused} togglePaused={togglePaused}
+            handleClickMinimize={handleClickMinimize}
+            isMinimized={isMinimized} setIsMinimized={setIsMinimized} />
     </div>)
 }
 
