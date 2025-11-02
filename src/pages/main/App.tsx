@@ -1,10 +1,11 @@
 
 import Reader from '@pages/main/Reader';
 import {
-    useState, useEffect
+    useState, useEffect, useRef
 } from 'react';
 
 import logo from '@assets/img/logo.svg';
+import { clear } from 'console';
 
 const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -21,7 +22,9 @@ const svgArrowTopRightOnSquare = (<svg xmlns="http://www.w3.org/2000/svg" fill="
 const svgXMark = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
 </svg>)
-
+const svgTrash = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+</svg>)
 
 
 
@@ -243,15 +246,40 @@ export default function App () {
         }
     };
 
+    const handleClickClearAllStorage = async (e, localStorage, clearAllStorageRef) => {
+        e.preventDefault()
+        console.log(localStorage)
+        for (const key of Object.keys(localStorage)) {
+            browser.storage.local.remove(key)
+        }
+        if (clearAllStorageRef.current) {
+        console.log(clearAllStorageRef.current.hidePopover())
+        }
+        return null
+    }
+
 
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
-
+    const clearAllStorageRef = useRef(null)
     return (<div className='w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
         <div className='flex flex-col w-screen bg-zinc-800'>
             <div className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
                 <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />
                 {/*<h1 className='col-span-1 col-start-2 text-center text-xl text-bold'></h1>*/}
-                <div className='col-start-3 col-span-1 justify-self-end flex flex-row space-x-4 justify-between text-center text-sm'>
+                <div className='relative col-start-3 col-span-1 justify-self-end flex flex-row space-x-4 justify-between text-center text-sm'>
+                    <button popoverTarget='confirmClearAllStorage'
+                        className='basis-xs border-gray-300 text-mono' >
+                        {svgTrash}</button>
+                    <div popover="auto" id='confirmClearAllStorage' ref={clearAllStorageRef}
+                        className={`open:absolute open:grid opacity-0 open:opacity-90`}>
+                        <div className='place-self-center'>
+                        <h3 className='text-lg'>Clear All Storage?</h3>
+                        <button className='border p-3 mx-2'
+                            onClick={(e)=>handleClickClearAllStorage(e, localStorage, clearAllStorageRef)}>
+                            confirm</button>
+                        <button className='border p-3 mx-2' popoverTarget='confirmClearAllStorage'>cancel</button>
+                        </div>
+                    </div>
                     <button
                         className='basis-xs border-gray-300 text-mono'
                         onClick={()=>setClipboard(JSON.stringify(localStorage))}>
