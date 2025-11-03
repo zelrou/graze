@@ -23,9 +23,24 @@ code {
     */
 }
 
-[popover] {
+[popover="auto"] {
     background-color: var(--color-neutral-900);
     padding: 20px;
     color: var(--color-zinc-200);
     width: 100vw;
+}
+
+[popover="hint"] {
+  inset: unset;
+  position: absolute;
+  top: calc(anchor(bottom) + 5px);
+  justify-self: anchor-center;
+  margin: 0;
+
+  padding: 8px;
+  border-radius: 6px;
+  background: #271717;
+  color: whitesmoke;
+  box-shadow: 1px 1px 3px #999;
+  border: none;
 }

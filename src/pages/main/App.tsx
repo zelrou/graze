@@ -233,7 +233,7 @@ const ModalContext = createContext(null)
 const ModalContainer = ({children, ...props}) => {
     return (
         <ModalContext value={props.modalRef}>
-            <dialog ref={props.modalRef}>{children}</dialog>
+            <dialog className='place-self-center' ref={props.modalRef}>{children}</dialog>
         </ModalContext>
     )
 }
@@ -314,18 +314,27 @@ export default function App () {
 
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
     const clearAllStorageRef = useRef(null)
+    const clearAllStorageTooltipRef = useRef(null)
     return (<div className='relative w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
-        <ModalContainer isSetup={isSetup} modalRef={modalRef}>
+        <ModalContainer modalRef={modalRef}>
             { !isSetup ? null : (<WelcomeModal setLocalStorage={setLocalStorage} />) }
         </ModalContainer>
         <div className='flex flex-col w-screen bg-zinc-800'>
-            <div className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
+            {/* ========== TOP TOOLBAR ========== */}
+            <div id='app-toolbar-top' className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
                 <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />
-                {/*<h1 className='col-span-1 col-start-2 text-center text-xl text-bold'></h1>*/}
-                <div className='relative col-start-3 col-span-1 justify-self-end flex flex-row space-x-4 justify-between text-center text-sm'>
+                <div className={`relative col-start-3 col-span-1 justify-self-end
+                    flex flex-row space-x-4 justify-between text-center text-sm`}>
                     <button popoverTarget='confirmClearAllStorage'
-                        className='basis-xs border-gray-300 text-mono' >
-                        {svgTrash}</button>
+                        className='basis-xs text-mono'
+                        onMouseOver={(e)=>clearAllStorageTooltipRef.current.showPopover()}
+                        onMouseOut={(e)=>clearAllStorageTooltipRef.current.hidePopover()}
+                        onFocus={(e)=>clearAllStorageTooltipRef.current.showPopover()}
+                        onBlur={(e)=>clearAllStorageTooltipRef.current.hidePopover()}
+                    >
+                        {svgTrash}
+                        <div ref={clearAllStorageTooltipRef} id="tooltip-1" className="tooltip" popover="hint">Clear All Storage</div>
+                    </button>
                     <div popover="auto" id='confirmClearAllStorage' ref={clearAllStorageRef}
                         className={`open:absolute open:grid opacity-0 open:opacity-90`}>
                         <div className='place-self-center'>
@@ -337,7 +346,7 @@ export default function App () {
                         </div>
                     </div>
                     <button
-                        className='basis-xs border-gray-300 text-mono'
+                        className='basis-xs text-mono'
                         onClick={()=>setClipboard(JSON.stringify(localStorage))}>
                         {svgClipboard}export</button>
                     <a className='basis-xs self-center' href='github.com'>github</a>
