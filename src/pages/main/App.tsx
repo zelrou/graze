@@ -1,7 +1,7 @@
 
 import Reader from '@pages/main/Reader';
 import {
-    useState, useEffect, useRef
+    useState, useEffect, useRef, useReducer, createContext, useContext
 } from 'react';
 
 import logo from '@assets/img/logo.svg';
@@ -28,11 +28,12 @@ const svgTrash = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0
 
 
 
-const blacklistProtocol = ['about:', 'moz-extension:']
+const denylistProtocol = ['about:', 'moz-extension:', 'graze']
 const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
-const isInBlacklist = (s) => {
+const isInDenylist = (s) => {
+    if (s === 'graze') return true
     const { protocol } = URL.parse(s);
-    return blacklistProtocol.includes(protocol)
+    return denylistProtocol.includes(protocol)
 }
 
 /* ========== TABS ========== */
@@ -41,7 +42,9 @@ const getTabs = async (queryInfo={}) => {
     if (tabs.length) {
         tabs = tabs.sort((t1, t2) => (t1.id < t2.id))
     }
-    return tabs.filter(t=>!isInBlacklist(t.url))
+
+
+    return tabs.filter(t=>!isInDenylist(t.url))
 }
 
 const useTabStore = () => {
@@ -72,7 +75,7 @@ const useTabStore = () => {
 
     useEffect(async () => {
         console.log('useEffect runs')
-        /* TODO blacklistProtocol on tabs here */
+        /* TODO denylistProtocol on tabs here */
         let tabs = await getTabs();
         setTabs(tabs);
 
@@ -97,7 +100,7 @@ const useLocalStorage = () => {
 
     const normalizeStorage = async keys => {
         for (let k of keys) {
-            if (!k || isInBlacklist(k)) continue;
+            if (!k || isInDenylist(k)) continue;
             const res = await browser.storage.local.get(k)
             const v = res[k]
             console.log('normalize', keys,k,v)
@@ -226,6 +229,50 @@ async function setClipboard(text="<3") {
   await navigator.clipboard.write([clipboardItem]);
 }
 
+const ModalContext = createContext(null)
+const ModalContainer = ({children, ...props}) => {
+    return (
+        <ModalContext value={props.modalRef}>
+            <dialog ref={props.modalRef}>{children}</dialog>
+        </ModalContext>
+    )
+}
+
+const WelcomeModal = ({setLocalStorage}) => {
+    const modalRef = useContext(ModalContext)
+    return (<div className='p-4 space-y-4 flex flex-col items-center'>
+        <h2 className='text-center text-lg'>Welcome!</h2>
+        <div className=''>
+            <p>
+                In another tab, open a page you want to read (e.g. a <a target="_blank" href="https://en.wikipedia.org/wiki/Special:Random">random wikipedia article</a>).
+                <br />
+                You'll see the page in your Open Tabs list.
+                <br />
+                Click the arrow to the right of the corresponding tab to enter the Reader Mode.
+            </p>
+            <p>From there you can ...</p>
+            <ul>
+                <li>+ Click the arrows on the left and right to seek forward and back in the text</li>
+                <li>+ Use the arrow keys to seek</li>
+                <li>+ Click the play button at the bottom to auto-seek</li>
+            </ul>
+            <p>As you seek, you'll see your progress and location update</p>
+            <p>Click Mark Progress so you can come back to that position</p>
+        </div>
+        <div className='flex flex-row space-x-4'>
+            <button
+                onClick={ async() => {
+                    await setLocalStorage('graze', {'setup': false})
+                    modalRef.current.close()
+                }}
+                className='border-1 border-gray-300 p-1'>dont show this again</button>
+            <button autoFocus
+                onClick={()=>modalRef.current.close()}
+                className='border-1 border-gray-300 p-1'>dismiss</button>
+        </div>
+    </div>)
+}
+
 export default function App () {
     console.log('App didMount')
     const tabs = useTabStore();
@@ -235,6 +282,13 @@ export default function App () {
     const [readerUrl, setReaderUrl] = useState('');
     const [isMinimized, setIsMinimized] = useState(true);
     const [isPaused, togglePaused] = useState(true)
+
+    /* ========== WELCOME / HELP MODAL REF ========== */
+    const modalRef = useRef(null)
+    const isSetup = (localStorage.hasOwnProperty('graze')
+        && localStorage['graze'].setup)
+    console.log('WELCOME', isSetup)
+    if (modalRef.current && isSetup) { modalRef.current.showModal(); }
 
     /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
     const handleClickMinimize = () => {
@@ -258,10 +312,12 @@ export default function App () {
         return null
     }
 
-
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
     const clearAllStorageRef = useRef(null)
-    return (<div className='w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
+    return (<div className='relative w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
+        <ModalContainer isSetup={isSetup} modalRef={modalRef}>
+            { !isSetup ? null : (<WelcomeModal setLocalStorage={setLocalStorage} />) }
+        </ModalContainer>
         <div className='flex flex-col w-screen bg-zinc-800'>
             <div className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
                 <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />

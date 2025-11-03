@@ -1,4 +1,8 @@
 console.log('background script loaded');
+browser.runtime.onInstalled.addListener(() => {
+    browser.storage.local.set({graze: {setup:true}})
+})
+
 browser.runtime.onMessage.addListener((message) => {
     console.log(message);
 //  browser.notifications.create({
