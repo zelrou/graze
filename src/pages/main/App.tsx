@@ -1,11 +1,12 @@
 
 import Reader from '@pages/main/Reader';
 import {
-    useState, useEffect, useRef, useReducer, createContext, useContext
+    useState, useEffect, useRef, useReducer, createContext, useContext,
+    useEffectEvent, useSyncExternalStore
 } from 'react';
 
 import logo from '@assets/img/logo.svg';
-import { clear } from 'console';
+import { toastStore } from './ToastStore';
 
 const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -24,6 +25,9 @@ const svgXMark = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0
 </svg>)
 const svgTrash = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+</svg>)
+const svgQuestionMarkCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
 </svg>)
 
 
@@ -179,9 +183,9 @@ const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) =
         return (
             <tr key={t.id} className={readerUrl === t.url ? 'bg-emerald-300/40' : ''}>
                 <td className='border-b p-2 border-gray-300 font-sans'>{t.title}</td>
-                <td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>
+                {/*<td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>*/}
                 <td className='border-b p-2 border-gray-300 text-right font-mono'>{sIdx}.{pIdx}.{cIdx}</td>
-                <td className='border-b p-2 border-gray-300'><button className=''
+                <td className='border-b p-2 border-gray-300 text-center'><button className=''
                     onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
                     {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
             </tr>) })
@@ -233,12 +237,14 @@ const ModalContext = createContext(null)
 const ModalContainer = ({children, ...props}) => {
     return (
         <ModalContext value={props.modalRef}>
-            <dialog className='place-self-center' ref={props.modalRef}>{children}</dialog>
+            <dialog className='backdrop:bg-black/60 place-self-center' ref={props.modalRef}>
+                {children}
+            </dialog>
         </ModalContext>
     )
 }
 
-const WelcomeModal = ({setLocalStorage}) => {
+const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
     const modalRef = useContext(ModalContext)
     return (<div className='p-4 space-y-4 flex flex-col items-center'>
         <h2 className='text-center text-lg'>Welcome!</h2>
@@ -267,13 +273,18 @@ const WelcomeModal = ({setLocalStorage}) => {
                 }}
                 className='border-1 border-gray-300 p-1'>dont show this again</button>
             <button autoFocus
-                onClick={()=>modalRef.current.close()}
+                onClick={()=>{
+                    setShowHelp(false)
+                    modalRef.current.close()
+                }}
                 className='border-1 border-gray-300 p-1'>dismiss</button>
         </div>
     </div>)
 }
 
-export default function App () {
+
+/* ========== APP ========== */
+export default function App ({}) {
     console.log('App didMount')
     const tabs = useTabStore();
     console.log('App prelocalStorage')
@@ -283,12 +294,23 @@ export default function App () {
     const [isMinimized, setIsMinimized] = useState(true);
     const [isPaused, togglePaused] = useState(true)
 
+
     /* ========== WELCOME / HELP MODAL REF ========== */
     const modalRef = useRef(null)
     const isSetup = (localStorage.hasOwnProperty('graze')
         && localStorage['graze'].setup)
+    const ignore = (localStorage.hasOwnProperty('graze')
+        && localStorage['graze'].ignore)
+
     console.log('WELCOME', isSetup)
-    if (modalRef.current && isSetup) { modalRef.current.showModal(); }
+
+    const [showHelp, setShowHelp] = useState(true)
+    const handleClickHelp = () => {
+        setShowHelp(true)
+    };
+    if (modalRef.current && ((isSetup&&showHelp) || (showHelp&&!isSetup))) {
+        modalRef.current.showModal();
+    }
 
     /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
     const handleClickMinimize = () => {
@@ -300,24 +322,46 @@ export default function App () {
         }
     };
 
-    const handleClickClearAllStorage = async (e, localStorage, clearAllStorageRef) => {
+    /* ========== TOOLBAR: CLEAR STORAGE ==========  */
+    const clearAllStorageRef = useRef(null)
+    const clearAllStorageTooltipRef = useRef(null)
+
+    const handleClickClearAllStorage = async (e) => {
         e.preventDefault()
-        console.log(localStorage)
+        console.log('handleClickClearAllStorage')
         for (const key of Object.keys(localStorage)) {
             browser.storage.local.remove(key)
         }
         if (clearAllStorageRef.current) {
-        console.log(clearAllStorageRef.current.hidePopover())
+            clearAllStorageRef.current.hidePopover()
         }
+        setMsg('Cleared Stoarge')
         return null
     }
 
+
+    /* ========== TOASTS ========== */
+    const toasts = useSyncExternalStore(toastStore.subscribe, toastStore.getSnapshot)
+    const [msg, setMsg] = useState('');
+
+    const handleClickExport = (e) => {
+        e.preventDefault()
+        setClipboard(JSON.stringify(localStorage))
+        setMsg('copied to clipboard')
+    }
+    useEffect(()=>{
+        if (msg) {
+            toastStore.addToast(msg)
+        }
+    }, [msg, toasts])
+
+
+    /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
-    const clearAllStorageRef = useRef(null)
-    const clearAllStorageTooltipRef = useRef(null)
+
     return (<div className='relative w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
         <ModalContainer modalRef={modalRef}>
-            { !isSetup ? null : (<WelcomeModal setLocalStorage={setLocalStorage} />) }
+            <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
         <div className='flex flex-col w-screen bg-zinc-800'>
             {/* ========== TOP TOOLBAR ========== */}
@@ -325,6 +369,7 @@ export default function App () {
                 <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />
                 <div className={`relative col-start-3 col-span-1 justify-self-end
                     flex flex-row space-x-4 justify-between text-center text-sm`}>
+                    <button onClick={handleClickHelp}>{svgQuestionMarkCircle}</button>
                     <button popoverTarget='confirmClearAllStorage'
                         className='basis-xs text-mono'
                         onMouseOver={(e)=>clearAllStorageTooltipRef.current.showPopover()}
@@ -340,24 +385,24 @@ export default function App () {
                         <div className='place-self-center'>
                         <h3 className='text-lg'>Clear All Storage?</h3>
                         <button className='border p-3 mx-2'
-                            onClick={(e)=>handleClickClearAllStorage(e, localStorage, clearAllStorageRef)}>
+                            onClick={(e)=>handleClickClearAllStorage(e)}>
                             confirm</button>
                         <button className='border p-3 mx-2' popoverTarget='confirmClearAllStorage'>cancel</button>
                         </div>
                     </div>
-                    <button
-                        className='basis-xs text-mono'
-                        onClick={()=>setClipboard(JSON.stringify(localStorage))}>
+                    <button className='basis-xs text-mono'
+                        onClick={handleClickExport}>
                         {svgClipboard}export</button>
                     <a className='basis-xs self-center' href='github.com'>github</a>
                 </div>
             </div>
         </div>
+
         <h2 className='text-lg text-semibold'>Open Tabs</h2>
         <table className='table-auto md:w-7/10 bg-zinc-800 border-gray-300/50 border-4'>
             <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
                 <th className='p-2'>TITLE</th>
-                <th className='p-2'>URL</th>
+                {/*<th className='p-2'>URL</th>*/}
                 <th className='p-2 text-right'>LOCATION</th>
                 <th></th>
             </tr></thead>
@@ -388,7 +433,10 @@ export default function App () {
             setLocalStorage={ setLocalStorage }
             isPaused={isPaused} togglePaused={togglePaused}
             handleClickMinimize={handleClickMinimize}
-            isMinimized={isMinimized} setIsMinimized={setIsMinimized} />
+            isMinimized={isMinimized}
+            setIsMinimized={setIsMinimized}
+            addToast={toastStore.addToast}
+        />
     </div>)
 }
 

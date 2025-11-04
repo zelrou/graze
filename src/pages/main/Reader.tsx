@@ -250,7 +250,8 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
 }
 
 export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
-    handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused}) {
+    handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused,
+    addToast}) {
     const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
@@ -475,6 +476,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         const mark = { sIdx: partIndex, pIdx: paragraphIndex, cIdx: charIndex }
         await setLocalStorage(paragraphUrl, {...mark})
         console.log('setStorageMarkOK');
+        addToast(`set progress ${partIndex}.${paragraphIndex}.${charIndex}`)
     }
 
     const handleClickSetBookmarkLatest = async (e) => {
@@ -501,9 +503,14 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
     const handleClickClearBookmarks = async (e) => {
         e.preventDefault()
-        return browser.storage.local.set({
+        /* TODO add confirm dialog */
+        await browser.storage.local.set({
             [paragraphUrl]: { sIdx: 0, pIdx: 0, cIdx: 0 }
         })
+        let {author, title} = structuredWork;
+        author = author || ''
+        title = title || ''
+        addToast(`cleared progress ${author} - ${title}`)
     }
 
 

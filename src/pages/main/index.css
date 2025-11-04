@@ -23,6 +23,7 @@ code {
     */
 }
 
+/* ========== WELCOME MODAL ========== */
 [popover="auto"] {
     background-color: var(--color-neutral-900);
     padding: 20px;
@@ -30,6 +31,7 @@ code {
     width: 100vw;
 }
 
+/* ========== TOOLTIPS ========== */
 [popover="hint"] {
   inset: unset;
   position: absolute;
@@ -43,4 +45,12 @@ code {
   color: whitesmoke;
   box-shadow: 1px 1px 3px #999;
   border: none;
+}
+
+/* ========== TOASTS ========== */
+[popover="manual"] {
+    position: absolute;
+    inset: unset;
+    right: 5px;
+    bottom: 5px;
 }
