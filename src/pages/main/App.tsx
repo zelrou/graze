@@ -237,7 +237,9 @@ const ModalContext = createContext(null)
 const ModalContainer = ({children, ...props}) => {
     return (
         <ModalContext value={props.modalRef}>
-            <dialog className='backdrop:bg-black/60 place-self-center' ref={props.modalRef}>
+            <dialog className='backdrop:bg-black/60 place-self-center'
+                ref={props.modalRef}
+                onClose={props.onClose}>
                 {children}
             </dialog>
         </ModalContext>
@@ -294,6 +296,17 @@ export default function App ({}) {
     const [isMinimized, setIsMinimized] = useState(true);
     const [isPaused, togglePaused] = useState(true)
 
+    /* ========== TOASTS ========== */
+    /* TODO create custom hook */
+    const toasts = useSyncExternalStore(
+        toastStore.subscribe,
+        toastStore.getSnapshot)
+    const [msg, setMsg] = useState('');
+    useEffect(()=>{
+        if (msg) {
+            toastStore.addToast(msg)
+        }
+    }, [msg, toasts])
 
     /* ========== WELCOME / HELP MODAL REF ========== */
     const modalRef = useRef(null)
@@ -340,20 +353,32 @@ export default function App ({}) {
     }
 
 
-    /* ========== TOASTS ========== */
-    const toasts = useSyncExternalStore(toastStore.subscribe, toastStore.getSnapshot)
-    const [msg, setMsg] = useState('');
-
+    /* ========== TOOLBAR: EXPORT STORAGE ==========  */
+    const exportStorageTooltipRef = useRef(null)
     const handleClickExport = (e) => {
         e.preventDefault()
         setClipboard(JSON.stringify(localStorage))
         setMsg('copied to clipboard')
     }
-    useEffect(()=>{
-        if (msg) {
-            toastStore.addToast(msg)
-        }
-    }, [msg, toasts])
+
+
+    /* ========== TOOLBAR: IMPORT STORAGE ==========*/
+    const importModalRef = useRef(null)
+    const inputTextAreaImportModalRef = useRef(null)
+    const handleClickOpenImportModal = (e) => {
+        e.preventDefault()
+        importModalRef.current.showModal()
+    }
+    const handleClickSubmitImportModal = (e) => {
+        e.preventDefault()
+        const res = inputTextAreaImportModalRef.current.value;
+        importModalRef.current.close(res)
+    }
+    /* https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog#handling_the_return_value_from_the_dialog */
+    const onCloseImportModal = (e) => {
+        inputTextAreaImportModalRef.current.value = ''
+        console.log(importModalRef.current.returnValue)
+    }
 
 
     /* ========== RENDER ========== */
@@ -363,36 +388,69 @@ export default function App ({}) {
         <ModalContainer modalRef={modalRef}>
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
+        <ModalContainer modalRef={importModalRef} onClose={onCloseImportModal}>
+           <form method='dialog' className='flex flex-col'>
+                <label className='flex flex-col' for='importStorageInput'>
+                    <p>paste exported settings here:</p>
+                    <textarea
+                        ref={inputTextAreaImportModalRef}
+                        name='importStorageInput'></textarea>
+                </label>
+                <div className='flex flex-row'>
+                    <button
+                        onClick={handleClickSubmitImportModal}>
+                        confirm</button>
+                    <button autoFocus>cancel</button>
+                </div>
+            </form>
+        </ModalContainer>
         <div className='flex flex-col w-screen bg-zinc-800'>
             {/* ========== TOP TOOLBAR ========== */}
             <div id='app-toolbar-top' className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
+                {/* LEFT (col-1/3 */}
                 <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />
+                {/* RIGHT (col-start-3/3) */}
                 <div className={`relative col-start-3 col-span-1 justify-self-end
                     flex flex-row space-x-4 justify-between text-center text-sm`}>
-                    <button onClick={handleClickHelp}>{svgQuestionMarkCircle}</button>
+                    <button onClick={handleClickHelp}>
+                        {svgQuestionMarkCircle}</button>
                     <button popoverTarget='confirmClearAllStorage'
                         className='basis-xs text-mono'
                         onMouseOver={(e)=>clearAllStorageTooltipRef.current.showPopover()}
                         onMouseOut={(e)=>clearAllStorageTooltipRef.current.hidePopover()}
                         onFocus={(e)=>clearAllStorageTooltipRef.current.showPopover()}
-                        onBlur={(e)=>clearAllStorageTooltipRef.current.hidePopover()}
-                    >
+                        onBlur={(e)=>clearAllStorageTooltipRef.current.hidePopover()}>
                         {svgTrash}
-                        <div ref={clearAllStorageTooltipRef} id="tooltip-1" className="tooltip" popover="hint">Clear All Storage</div>
+                        <div ref={clearAllStorageTooltipRef} id="tooltip-app-cas"
+                            className="tooltip" popover="hint">Clear All Storage</div>
                     </button>
-                    <div popover="auto" id='confirmClearAllStorage' ref={clearAllStorageRef}
+                    <div popover="auto" id='confirmClearAllStorage'
+                        ref={clearAllStorageRef}
                         className={`open:absolute open:grid opacity-0 open:opacity-90`}>
                         <div className='place-self-center'>
-                        <h3 className='text-lg'>Clear All Storage?</h3>
-                        <button className='border p-3 mx-2'
-                            onClick={(e)=>handleClickClearAllStorage(e)}>
-                            confirm</button>
-                        <button className='border p-3 mx-2' popoverTarget='confirmClearAllStorage'>cancel</button>
+                            <h3 className='text-lg'>Clear All Storage?</h3>
+                            <button className='border p-3 mx-2'
+                                onClick={(e)=>handleClickClearAllStorage(e)}>
+                                confirm</button>
+                            <button className='border p-3 mx-2'
+                                popoverTarget='confirmClearAllStorage'>
+                                cancel</button>
                         </div>
                     </div>
                     <button className='basis-xs text-mono'
-                        onClick={handleClickExport}>
-                        {svgClipboard}export</button>
+                        onClick={handleClickExport}
+                        onMouseOver={(e)=>exportStorageTooltipRef.current.showPopover()}
+                        onMouseOut={(e)=>exportStorageTooltipRef.current.hidePopover()}
+                        onFocus={(e)=>exportStorageTooltipRef.current.showPopover()}
+                        onBlur={(e)=>exportStorageTooltipRef.current.hidePopover()}>
+                        {svgClipboard}
+                        <div popover='hint' className='tooltip' ref={exportStorageTooltipRef}>
+                            Export Storage to Clipboard</div>
+                    </button>
+                    <button className='basis-xs text-mono'
+                        onClick={handleClickOpenImportModal}>
+                        import
+                    </button>
                     <a className='basis-xs self-center' href='github.com'>github</a>
                 </div>
             </div>
