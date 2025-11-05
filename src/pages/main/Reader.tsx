@@ -33,6 +33,10 @@ const svgPlay = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
 const svgPause = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
 </svg>)
+const svgCog6Tooth = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+</svg>)
 
 
 
@@ -207,9 +211,9 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
     }
 
-    return (<div className='w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
+    return (<div className='order-5 sm:order-4 w-full md:w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
         <form method="post" onSubmit={handleSubmitSettings}
-        className='flex-shrink flex-grow-0 flex flex-row text-end justify-center'>
+        className='flex-shrink flex-grow-0 flex gap-x-4 flex-row text-center sm:text-end justify-between sm:justify-center'>
         <div className='contents'>
             <label for='part'><span className='text-blue-300 font-semibold'>S:</span>
                 <input type='number' name='partIndexInput'
@@ -520,6 +524,31 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         setIsOpenSearchContainer(isOpen => !isOpen);
     }
 
+    /* ========== TOOLBAR BOTTOM RESPONSIVE MINIMIZE/MAXIMIZE ========== */
+    const toolbarBottomRef = useRef(null)
+    const defaultToolbarBottomState = window.screen.width < 641;
+    const [toolbarBottomIsMinimized, setToolbarBottomIsMinimized] = useState(defaultToolbarBottomState)
+    const minimizeToolbarBottom = () => {
+        toolbarBottomRef.current.style= ''
+        setToolbarBottomIsMinimized(true)
+    }
+    const handleClickExpandToolbarBottom = () => {
+        //let { classList } = toolbarBottomRef.current
+        //toolbarBottomRef.current.classList = [...classList, 'h-full', 'z-100']
+        if (!isPaused) togglePaused(true);
+        if (toolbarBottomIsMinimized) {
+            toolbarBottomRef.current.style=(`
+                position:fixed;
+                top:40vh;
+                height:60vh;
+                width:100vw;
+            `);
+            setToolbarBottomIsMinimized(false)
+        } else {
+            minimizeToolbarBottom()
+        }
+    }
+
     /* ========== MAIN TEXT STYLE ========= */
     const classesMainText = [
         `font-serif indent-0 text-left md:px-20 text-zinc-200`,
@@ -552,7 +581,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
 
             {/* ========== TOOLBAR TOP ========== */}
-            <div className={`pl-4 pr-4 flex flex-row justify-center justify-between`}>
+            <div className={`w-screen md:w-full pl-4 pr-4 flex flex-row justify-center justify-between`}>
 
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
                 <div className='flex-shrink flex flex-row flex-shrink justify-center'>
@@ -617,8 +646,9 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
                 {/* ========= MAIN TEXT ========== */}
                 <div id="graze-main-text"
-                    className={`relative flex flex-row md:h-8/10 h-7/10 shrink-0 grow-0 bg-zinc-800
-                    ${isMinimized ? 'hidden' : ''}
+                    className={`relative flex flex-row md:h-8/10 h-7/10
+                    shrink-0 grow-0 bg-zinc-800 ${isMinimized ? 'hidden' : ''}
+                    w-screen md:w-full
                     justify-between align-center`}
                     onKeyDown={e=>handleKey(e)} tabIndex="0">
 
@@ -669,12 +699,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
-                <div className={['pl-4 pr-4 pb-4 pt-2 bg-black flex flex-row justify-between align-center mt-4',
-                    'text-sm', isMinimized ? 'hidden' : ''].join(' ') }>
-
-
+                <div className={['flex flex-col sm:flex-row pl-4 pr-4 pb-4 sm:pt-4 bg-black justify-around sm:justify-between sm:items-center sm:mt-4',
+                    'text-sm', isMinimized ? 'hidden' : ''].join(' ') }
+                    ref={toolbarBottomRef}>
+                    <div className={`flex pt-2 order-1 sm:order-last sm:hidden`}>
+                        <button
+                            onClick={handleClickExpandToolbarBottom}
+                            >{toolbarBottomIsMinimized?svgCog6Tooth:svgChevronDown}</button>
+                    </div>
                     {/* WordInterval Controls */}
-                    <div className='flex-shrink flex flex-col justify-center'>
+                    <div className={`${toolbarBottomIsMinimized?'hidden':''} order-3 sm:order-1 text-center flex-shrink flex flex-col justify-center`}>
                         <label for='charInterval'># chars:
                             <input style={{width: '5rem'}}
                                 name='charIntervalInput' type='number'
@@ -684,7 +718,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                         </label>
                     </div>
                     {/* fontSize Controls */}
-                    <div className='flex-shrink flex flex-col justify-center'>
+                    <div className={`${toolbarBottomIsMinimized?'hidden':''} order-4 sm:order-2 text-center flex-shrink flex flex-col justify-center`}>
                         <label for='fontSize'>font size:
                             <input style={{width: '4rem'}} name='fontSizeInput'
                                 type='number' min='0.75' max='8' step='any'
@@ -693,9 +727,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                         </label>
                     </div>
 
-
                     {/* Auto Controls */}
-                    <div className="basis-md flex flex-row justify-between align-center">
+                    <div className="order-2 sm:order-4  sm:basis-md flex flex-row justify-between align-center">
                         <div className='basis-sm flex flex-col text-center justify-center'>
                             <label className='' for='delay'>⏳(ms):
                                 <input type='number' name='delayInput'
@@ -712,19 +745,20 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                             {isPaused ? svgPlay : svgPause }</button>
                     </div>
 
-
-                    {/* Location Form */}
-                    {/* TODO Update Location Context w these props */}
-                    <SetLocationContext value={{setLocation}}>
-                        <LocationForm
-                            structuredWork={structuredWork}
-                            paragraphUrl={paragraphUrl}
-                            sIdx={partIndex}
-                            pIdx={paragraphIndex}
-                            cIdx={charIndex}
-                            togglePaused={togglePaused}
-                        />
-                    </SetLocationContext>
+                    <div className={`${toolbarBottomIsMinimized?'hidden':''} contents`}>
+                        {/* Location Form */}
+                        {/* TODO Update Location Context w these props */}
+                        <SetLocationContext value={{setLocation}}>
+                            <LocationForm
+                                structuredWork={structuredWork}
+                                paragraphUrl={paragraphUrl}
+                                sIdx={partIndex}
+                                pIdx={paragraphIndex}
+                                cIdx={charIndex}
+                                togglePaused={togglePaused}
+                            />
+                        </SetLocationContext>
+                    </div>
 
 
                 </div>
