@@ -515,35 +515,37 @@ export default function App ({}) {
 
         <h2 className='text-lg text-semibold'>Open Tabs</h2>
         <div className='w-screen md:w-7/10 overflow-auto'>
-        <table className='table-fixed md:table-auto w-full bg-zinc-800 border-gray-300/50 border-4'>
-            <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
-                <th className='p-2'>TITLE</th>
-                {/*<th className='p-2'>URL</th>*/}
-                <th className='p-2 text-right'>LOCATION</th>
-                <th></th>
-            </tr></thead>
-            <tbody className='text-left'>
-                <UrlList
-                    tabs={ tabs }
-                    readerUrl={ readerUrl }
-                    setReaderUrl={ setReaderUrl }
-                    latestMarks={ localStorage }
-                    setIsMinimized={setIsMinimized} />
-            </tbody>
-        </table>
+            <table className='table-fixed md:table-auto w-full bg-zinc-800 border-gray-300/50 border-4'>
+                <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
+                    <th className='p-2'>TITLE</th>
+                    {/*<th className='p-2'>URL</th>*/}
+                    <th className='p-2 text-right'>LOCATION</th>
+                    <th></th>
+                </tr></thead>
+                <tbody className='text-left'>
+                    <UrlList
+                        tabs={ tabs }
+                        readerUrl={ readerUrl }
+                        setReaderUrl={ setReaderUrl }
+                        latestMarks={ localStorage }
+                        setIsMinimized={setIsMinimized} />
+                </tbody>
+            </table>
         </div>
         <h2 className='text-lg text-semibold'>Previous Tabs</h2>
-        <table className='table-auto md:w-7/10'>
-            <thead><tr>
-                <th>Url</th>
-                <th>Location</th>
-                <th></th>
-                <th></th>
-            </tr></thead>
-            <tbody>
-                <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
-            </tbody>
-        </table>
+        <div className='w-screen md:w-7/10 overflow-auto'>
+            <table className='table-fixed md:table-auto w-full'>
+                <thead><tr>
+                    <th>Url</th>
+                    <th>Location</th>
+                    <th></th>
+                    <th></th>
+                </tr></thead>
+                <tbody>
+                    <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
+                </tbody>
+            </table>
+        </div>
         <Reader
             paragraphUrl={ readerUrl }
             structuredWork={ structuredWork || defaultStructuredWork }
