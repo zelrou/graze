@@ -1,12 +1,12 @@
-
-import Reader from '@pages/main/Reader';
 import {
     useState, useEffect, useRef, useReducer, createContext, useContext,
     useEffectEvent, useSyncExternalStore
 } from 'react';
 
-import logo from '@assets/img/logo.svg';
+import { encodeUnicode, decodeUnicode } from './encodeUtils';
+import Reader from '@pages/main/Reader';
 import { toastStore } from './ToastStore';
+import logo from '@assets/img/logo.svg';
 
 const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -138,7 +138,7 @@ const useLocalStorage = () => {
     const setLocalStorage = async (x,v=null) => {
         console.log('setLocalStorage', x, v);
         if (v) { await browser.storage.local.set({[x]:v}) }
-        else { await browser.storage.local.set(stateLocalStorage.concat(x)) }
+        else { await browser.storage.local.set(x) }
         const res = await browser.storage.local.get()
         setStateLocalStorage(res);
     }
@@ -234,12 +234,17 @@ async function setClipboard(text="<3") {
 }
 
 const ModalContext = createContext(null)
-const ModalContainer = ({children, ...props}) => {
+const ModalContainer = ({...props}) => {
+    /* TODO pass all props to dialog and props.modalContext to ModalContext? */
+    const {children, modalRef, onClose, className} = props;
+    const defaultClass = 'backdrop:bg-black/60 place-self-center'
+    const classStr = `${defaultClass} ${className}`
     return (
-        <ModalContext value={props.modalRef}>
-            <dialog className='backdrop:bg-black/60 place-self-center'
-                ref={props.modalRef}
-                onClose={props.onClose}>
+        <ModalContext value={modalRef}>
+            <dialog
+                className={classStr}
+                ref={modalRef}
+                onClose={onClose}>
                 {children}
             </dialog>
         </ModalContext>
@@ -301,6 +306,7 @@ export default function App ({}) {
     const toasts = useSyncExternalStore(
         toastStore.subscribe,
         toastStore.getSnapshot)
+
     const [msg, setMsg] = useState('');
     useEffect(()=>{
         if (msg) {
@@ -348,7 +354,7 @@ export default function App ({}) {
         if (clearAllStorageRef.current) {
             clearAllStorageRef.current.hidePopover()
         }
-        setMsg('Cleared Stoarge')
+        setMsg('Storage cleared!')
         return null
     }
 
@@ -357,8 +363,11 @@ export default function App ({}) {
     const exportStorageTooltipRef = useRef(null)
     const handleClickExport = (e) => {
         e.preventDefault()
-        setClipboard(JSON.stringify(localStorage))
-        setMsg('copied to clipboard')
+        const uniStr = JSON.stringify(localStorage)
+        const encoded = encodeUnicode(uniStr)
+        console.log(encoded)
+        setClipboard(encoded)
+        setMsg('Copied data to clipboard.')
     }
 
 
@@ -375,9 +384,57 @@ export default function App ({}) {
         importModalRef.current.close(res)
     }
     /* https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog#handling_the_return_value_from_the_dialog */
-    const onCloseImportModal = (e) => {
+    const onCloseImportModal = async (e) => {
         inputTextAreaImportModalRef.current.value = ''
-        console.log(importModalRef.current.returnValue)
+        const { returnValue } = importModalRef.current
+
+        let decodedStr;
+        try {
+            decodedStr = decodeUnicode(returnValue)
+        } catch(e) {
+            console.log(e)
+            decodedStr = null
+        }
+
+        if (!decodedStr) {
+            setMsg(`Import failure: invalid import string.`)
+            return null
+        }
+
+        let decoded;
+        try {
+            decoded = JSON.parse(decodedStr)
+        } catch(e){
+            console.log(e)
+            setMsg(`Import failure: failed to parse import string.`)
+            return null
+        }
+
+        let result = null
+        try {
+            console.log(decoded)
+            await setLocalStorage(decoded)
+            result = 'success'
+        } catch(e) {
+            console.log(e)
+            result = 'failure'
+        }
+
+        switch(result) {
+            case 'failure': {
+                setMsg(`Import failure: error storing data.`)
+                return null
+             }
+            case 'success': {
+                setMsg(`Successfully imported data!`)
+                console.log('success imported', decoded)
+                return null
+            }
+            default: {
+                setMsg('Import failure: unexpected error.')
+                return null
+            }
+        }
     }
 
 
