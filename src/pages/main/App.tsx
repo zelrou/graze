@@ -441,7 +441,7 @@ export default function App ({}) {
     /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
-    return (<div className='relative w-screen h-screen flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
+    return (<div className='relative w-screen h-full flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
         <ModalContainer modalRef={modalRef}>
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
@@ -514,7 +514,8 @@ export default function App ({}) {
         </div>
 
         <h2 className='text-lg text-semibold'>Open Tabs</h2>
-        <table className='table-auto md:w-7/10 bg-zinc-800 border-gray-300/50 border-4'>
+        <div className='w-screen md:w-7/10 overflow-auto'>
+        <table className='table-fixed md:table-auto w-full bg-zinc-800 border-gray-300/50 border-4'>
             <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
                 <th className='p-2'>TITLE</th>
                 {/*<th className='p-2'>URL</th>*/}
@@ -530,6 +531,7 @@ export default function App ({}) {
                     setIsMinimized={setIsMinimized} />
             </tbody>
         </table>
+        </div>
         <h2 className='text-lg text-semibold'>Previous Tabs</h2>
         <table className='table-auto md:w-7/10'>
             <thead><tr>
