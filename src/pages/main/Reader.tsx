@@ -613,7 +613,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                     <h1>Reader</h1></div>
                 */}
                 {/* ========== WORK AUTHOR TITLE BAR ==========*/}
-                <div className={`grow flex flex-row w-full justify-around text-sm sm:text-md`}>
+                <div className={`grow flex flex-row w-full items-center justify-around text-sm sm:text-md`}>
                     {!structuredWork.author ? null : <h1 className='font-bold'>{structuredWork.author}</h1>}
                     {!structuredWork.title ? null : <h1 className='italic'>{structuredWork.title }</h1>}
                     {structuredWork.title || structuredWork.author ? null : <h1 className='font-sans'>{paragraphUrl}</h1>}
