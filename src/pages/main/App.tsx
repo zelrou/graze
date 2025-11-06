@@ -441,7 +441,7 @@ export default function App ({}) {
     /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
-    return (<div className='relative w-screen h-full flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
+    return (<div className='relative w-screen min-h-screen h-full flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
         <ModalContainer modalRef={modalRef}>
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
