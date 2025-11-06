@@ -398,12 +398,10 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
     {/* ---------- fontSize ---------- */}
     const handleFontSizeChange = e => {
-        console.log('what')
         if (!isPaused) togglePaused(isPaused => true)
         e.preventDefault()
         e.stopPropagation()
         const size = e.target.value
-        console.log(size)
         let _fontSize;
         if (size < 0.75) { _fontSize = 0.75; }
         else if (size > 8) { _fontSize = 8; }
@@ -418,19 +416,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
     /* TODO isPaused, delay dependency can be removed? */
     useEffect(()=>{
-        console.log('useEffectRuns')
+        console.log('useEffect[isPaused,delay]')
         let intervalID;
         if (!isPaused){
             intervalID = setInterval(()=>{
-                setClock(clock=>clock+1)
-                /*console.log('interval tick',clock,'wordIdx: ' + charIndex)*/
+                console.log('tick')
                 if (!isPaused) onTick();
             }, delay);
         }
         return () => clearInterval(intervalID)
     },[isPaused, delay])
-
-    // console.log('external tick',clock,'wordIdx: ' + wordIndex)
 
     const handleClickPause = () => {
         console.log('handleClickPause')
@@ -443,7 +438,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     /* ========== KEYBINDINGS ========== */
     const handleKey = (e) => {
         e.preventDefault();
-        console.log(e.type, e.key, e.keyCode, e.charCode)
+        console.log('handleKey', e.type, e.key, e.keyCode, e.charCode)
         switch (e.keyCode) {
             case 27: // esc
                 handleClickMinimize();
@@ -460,8 +455,6 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             default:
                 break;
         }
-
-        if (e.keyCode === 32) handleClickPause();
     }
 
     /* ========== INPUT FORM HANDLING ========== */
