@@ -210,7 +210,7 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         paragraphLength = structuredWork.parts[_sIdx].paragraphs.length
         charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
     }
-
+    const locationMatches = ((_cIdx === cIdx) && (_pIdx === pIdx) && (_sIdx === sIdx))
     return (<div className='order-5 sm:order-4 w-full md:w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
         <form method="post" onSubmit={handleSubmitSettings}
         className='flex-shrink flex-grow-0 flex gap-x-4 flex-row text-center sm:text-end justify-between sm:justify-center'>
@@ -247,8 +247,8 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
                 <span className='mr-2'>{ `/${charLength-1}` }</span>
             </label>
         </div>
-        <button type="submit"
-           className='bg-indigo-500 hover:bg-fuchsia-500'>
+        <button disabled={locationMatches} type="submit"
+           className={locationMatches ? 'bg-zinc-500' : 'bg-indigo-500 hover bg-fuchsia-500'}>
            {svgArrowTurnDownLeft}</button>
     </form></div>)
 }
@@ -560,14 +560,15 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             isMinimized ? 'bottom-0' : 'top-0',
             isMinimized ? 'bg-transparent' :'bg-zinc-950/80',
             isMinimized ? 'w-xs' : 'w-screen',
-            isMinimized ? 'h-20' : 'h-screen'
+            isMinimized ? 'h-20' : 'h-screen',
+            !paragraphUrl ? 'hidden' : ''
             ].join(' ')
             }>
         {/* ========== READER MODAL ROOT ========== */}
         <div id='reader-modal-root' className={ ['z-50 flex flex-col',
-            `md:pt-4 font-sans text-lg text-zinc-300
-            border-2 border-gray-300/50
-            rounded-sm bg-zinc-900 relative align-start justify-start`,
+            `pt-1 md:pt-4 font-sans text-lg text-zinc-300
+            sm:border-2 border-gray-300/50
+            rounded-sm bg-zinc-900 relative align-start justify-center`,
             isMinimized ? 'w-fit' : 'sm:w-screen lg:w-7/10',
             isMinimized ? 'h-full' : 'h-screen sm:h-screen lg:h-[70vh] ',
             isMinimized ? 'place-self-start' : 'place-self-center'
@@ -585,10 +586,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                     </button>}
                 </div>
 
-                {/* ---------- WINDOW TITLE ---------- */}
+                {/* ---------- WINDOW TITLE ----------
                 <div className='grow flex flex-row justify-center'>
                     <h1>Reader</h1></div>
-
+                */}
+                {/* ========== WORK AUTHOR TITLE BAR ==========*/}
+                <div className={`grow flex flex-row w-full justify-around text-sm sm:text-md`}>
+                    {!structuredWork.author ? null : <h1 className='font-bold'>{structuredWork.author}</h1>}
+                    {!structuredWork.title ? null : <h1 className='italic'>{structuredWork.title }</h1>}
+                    {structuredWork.title || structuredWork.author ? null : <h1 className='font-sans'>{paragraphUrl}</h1>}
+                </div>
                 {/* ---------- MIN/MAX READER WINDOW ---------- */}
                 <div className='flex-shrink flex flex-row justify-center'>
                     {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
@@ -611,18 +618,14 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             </div>
 
             <div className={!isOpenSearchContainer ? 'contents h-full' : 'hidden'}>
-                {/* ========== WORK AUTHOR TITLE BAR ==========*/}
-                <div className='flex flex-row w-full justify-around'>
-                    {!structuredWork.author ? null : <h1 className='font-bold'>{structuredWork.author}</h1>}
-                    {!structuredWork.title ? null : <h1 className='italic'>{structuredWork.title || paragraphUrl}</h1>}
-                </div>
+
 
 
 
                 {/* ========== BOOKMARK TOOLBAR ==========*/}
                 <div className={`${isMinimized ? 'hidden' :''}
                     border border-gray-300/50 divide-solid divide-x-6
-                    divide-gray-400 mb-4 w-full flex flex-row text-sm`}>
+                    divide-gray-400 mb-2 sm:mb-4 w-full flex flex-row text-sm`}>
                     <button className='basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickClearBookmarks} >
                         Clear Progress</button>
@@ -693,8 +696,11 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
-                <div className={['flex flex-col sm:flex-row pl-4 pr-4 pb-4 sm:pt-4 bg-black justify-around sm:justify-between sm:items-center sm:mt-4',
-                    'text-sm', isMinimized ? 'hidden' : ''].join(' ') }
+                <div className={`flex pl-4 pr-4 pt-2 sm:py-4 bg-black
+                    justify-around sm:justify-between sm:items-center sm:mt-4
+                    text-sm
+                    ${!toolbarBottomIsMinimized ? 'flex-col sm:flex-row' : 'flex-row'}
+                    ${isMinimized ? 'hidden' : ''}`}
                     ref={toolbarBottomRef}>
                     <div className={`flex pt-2 order-1 sm:order-last sm:hidden`}>
                         <button
@@ -734,7 +740,9 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                             outline-slate-800/70 border border-gray-300 px-4
                             py-2 text-sm font-semibold text-gray-800
                             dark:border-transparent dark:bg-gray-700
-                            dark:text-gray-200`}
+                            dark:text-gray-200
+                            ${!toolbarBottomIsMinimized && defaultToolbarBottomState ? 'hidden' : ''}
+                            `}
                             onClick={handleClickPause}> {/* TODO */}
                             {isPaused ? svgPlay : svgPause }</button>
                     </div>

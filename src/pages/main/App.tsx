@@ -185,9 +185,10 @@ const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) =
                 <td className='border-b p-2 border-gray-300 font-sans'>{t.title}</td>
                 {/*<td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>*/}
                 <td className='border-b p-2 border-gray-300 text-right font-mono'>{sIdx}.{pIdx}.{cIdx}</td>
-                <td className='border-b p-2 border-gray-300 text-center'><button className=''
-                    onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
-                    {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
+                <td className='border-b p-2 border-gray-300 text-center'>
+                    <button className='hover:bg-emerald-500/50 p-1'
+                        onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
+                        {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
             </tr>) })
 }
 
@@ -214,12 +215,18 @@ const PrevUrlList = ({tabs, latestMarks}) => {
     return !prevTabs.length ? null : prevTabs.map(pt => {
         return Object.keys(latestMarks).length && (
             <tr key={pt.url}>
-                <td className='border-b p-2 border-gray-300 font-sans'>{pt.url}</td>
-                <td className='border-b p-2 border-gray-300 text-right font-mono'>{pt.sIdx}.{pt.pIdx}.{pt.cIdx}</td>
-                <td className='border-b p-2 border-gray-300'><button className=''
+                <td className='border-b p-2 border-gray-300 font-sans'>
+                    <div className='flex gap-1'>
+                        <button className='p-1 hover:bg-rose-500/50'
+                            onClick={(e) => handleClickRemovePreviousTab(e, pt.url)}>
+                            {svgXMark}</button>
+                        <span className='text-sm p-1'>{pt.url}</span></div></td>
+                <td className='border-b p-2 border-gray-300 text-sm text-right font-mono'>{pt.sIdx}.{pt.pIdx}.{pt.cIdx}</td>
+                <td className='border-b p-2 border-gray-300 text-center'>
+                    <button className='hover:bg-yellow-500/50 p-1'
                     onClick={() => browser.tabs.create({url:pt.url})}>
-                    {svgArrowTopRightOnSquare}</button></td>
-                <td><button onClick={(e) => handleClickRemovePreviousTab(e, pt.url)}>{svgXMark}</button></td>
+                    {svgArrowTopRightOnSquare}</button>
+                </td>
             </tr>) })
 }
 
@@ -441,7 +448,8 @@ export default function App ({}) {
     /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
-    return (<div className='relative w-screen min-h-screen h-full flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
+    return (<div className={`relative w-screen min-h-screen h-full flex
+        flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
         <ModalContainer modalRef={modalRef}>
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
@@ -517,10 +525,10 @@ export default function App ({}) {
         <div className='w-screen md:w-7/10 overflow-auto'>
             <table className='table-fixed md:table-auto w-full bg-zinc-800 border-gray-300/50 border-4'>
                 <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
-                    <th className='p-2'>TITLE</th>
+                    <th className='p-2 w-3/10'>TITLE</th>
                     {/*<th className='p-2'>URL</th>*/}
-                    <th className='p-2 text-right'>LOCATION</th>
-                    <th></th>
+                    <th className='p-2 w-1/10 text-right'>LOCATION</th>
+                    <th className='w-1/10'></th>
                 </tr></thead>
                 <tbody className='text-left'>
                     <UrlList
@@ -536,10 +544,9 @@ export default function App ({}) {
         <div className='w-screen md:w-7/10 overflow-auto'>
             <table className='table-fixed md:table-auto w-full'>
                 <thead><tr>
-                    <th>Url</th>
-                    <th>Location</th>
-                    <th></th>
-                    <th></th>
+                    <th className='p-2 w-3/10'>Url</th>
+                    <th className='p-2 w-1/10 text-right'>Location</th>
+                    <th className='w-1/10'></th>
                 </tr></thead>
                 <tbody>
                     <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />
