@@ -271,7 +271,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
-    const [fontSize, setFontSize] = useState(1.5);
+    const defaultFontSize = (window.screen.width < 641) ? 1 : 1.5;
+    const [fontSize, setFontSize] = useState(defaultFontSize);
 
     const [delay, setDelay] = useState(DEFAULTS.DELAY);
 
@@ -407,7 +408,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         if (!isPaused) togglePaused(isPaused => true);
         const inputVal = Number.parseInt(e.target.value)
         let newVal = inputVal ? inputVal : 200
-        newVal = (newVal>=3) && (newVal<=1000) ? newVal : 200
+        newVal = (newVal>=1) && (newVal<=1000) ? newVal : 200
         setCharInterval(charInterval => newVal)
     }
 
