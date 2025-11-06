@@ -328,7 +328,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         const prevPartIndex = partIndex - 1;
         let prevCharLength;
         let prevParagraphLength;
-        console.log('getPrevMainText', prevCharIndex, prevParagraphIndex, prevPartIndex)
+        console.log('getPrevMainText', charIndex, prevCharIndex, prevParagraphIndex, prevPartIndex)
         if (prevCharIndex < 0) { // we MAY need to go back a paragraph
             if (prevParagraphIndex < 0) { // we need to go back a part
                 if (prevPartIndex < 0) { // we are at the beginnning
@@ -342,7 +342,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                     // set paragraphIndex to last paragraph of previous part
                     setParagraphIndex(prevParagraphLength - 1);
                     // set charIndex to last chars of previous paragraph
-                    setCharIndex(prevCharLength - charInterval);
+                    const cIdx = Math.max(0, prevCharLength - charInterval)
+                    setCharIndex(cIdx);
                 }
             } else if (charIndex>0) { // we need to go to beginning of paragraph
                 setCharIndex(0);
