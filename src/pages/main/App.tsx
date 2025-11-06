@@ -276,6 +276,7 @@ const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
             <button
                 onClick={ async() => {
                     await setLocalStorage('graze', {'setup': false})
+                    setShowHelp(false)
                     modalRef.current.close()
                 }}
                 className='border-1 border-gray-300 p-1'>dont show this again</button>
@@ -318,15 +319,14 @@ export default function App ({}) {
     const modalRef = useRef(null)
     const isSetup = (localStorage.hasOwnProperty('graze')
         && localStorage['graze'].setup)
-    const ignore = (localStorage.hasOwnProperty('graze')
-        && localStorage['graze'].ignore)
-
-    console.log('WELCOME', isSetup)
-
-    const [showHelp, setShowHelp] = useState(true)
+    const [showHelp, setShowHelp] = useState(false)
     const handleClickHelp = () => {
         setShowHelp(true)
     };
+    console.log('WELCOME setup,help', isSetup,showHelp)
+    useEffect(()=>{
+        if (isSetup) setShowHelp(true);
+    }, [isSetup, setShowHelp])
     if (modalRef.current && ((isSetup&&showHelp) || (showHelp&&!isSetup))) {
         modalRef.current.showModal();
     }
