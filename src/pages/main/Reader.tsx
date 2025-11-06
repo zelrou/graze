@@ -146,24 +146,35 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
     const [_pIdx, set_pIdx] = useState(0)
     const [_cIdx, set_cIdx] = useState(0)
 
+    let partLength, paragraphLength, charLength;
     const handleLocationChange = e => {
         e.stopPropagation();
         togglePaused(true);
         console.log(e.target)
-        const newVal = e.target.value
+        const inputVal = Number.parseInt(e.target.value)
+        if (!inputVal) return null
         switch(e.target.name) {
-            case 'partIndexInput':
+            case 'partIndexInput': {
+                const newVal = (((inputVal<partLength) && (inputVal>=0))
+                    ? inputVal : 0)
                 set_sIdx(newVal)
                 set_pIdx(0)
                 set_cIdx(0)
                 break
-            case 'paragraphIndexInput':
+            }
+            case 'paragraphIndexInput': {
+                const newVal = (((inputVal<paragraphLength) && (inputVal>=0))
+                    ? inputVal : 0)
                 set_pIdx(newVal)
                 set_cIdx(0)
                 break
-            case 'charIndexInput':
+            }
+            case 'charIndexInput': {
+                const newVal = (((inputVal<charLength) && (inputVal>=0))
+                    ? inputVal : 0)
                 set_cIdx(newVal)
                 break
+            }
             default:
                 break
         }
@@ -182,7 +193,6 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         setLocation(s,p,c)
     }
 
-    let partLength, paragraphLength, charLength;
     if (paragraphUrl !== prevParagraphUrl) {
         console.log('url change')
         setPrevParagraphUrl(paragraphUrl)
@@ -207,10 +217,11 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
             set_cIdx(cIdx)
         }
         partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[_sIdx].paragraphs.length
+        paragraphLength =  structuredWork.parts[_sIdx].paragraphs.length
         charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
     }
     const locationMatches = ((_cIdx === cIdx) && (_pIdx === pIdx) && (_sIdx === sIdx))
+
     return (<div className='order-5 sm:order-4 w-full md:w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
         <form method="post" onSubmit={handleSubmitSettings}
         className='flex-shrink flex-grow-0 flex gap-x-4 flex-row text-center sm:text-end justify-between sm:justify-center'>
@@ -394,7 +405,10 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         e.preventDefault();
         e.stopPropagation();
         if (!isPaused) togglePaused(isPaused => true);
-        setCharInterval(charInterval => Number(e.target.value))
+        const inputVal = Number.parseInt(e.target.value)
+        let newVal = inputVal ? inputVal : 200
+        newVal = (newVal>=3) && (newVal<=1000) ? newVal : 200
+        setCharInterval(charInterval => newVal)
     }
 
     {/* ---------- fontSize ---------- */}
@@ -459,14 +473,22 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     }
 
     /* ========== INPUT FORM HANDLING ========== */
+    const [_delay, set_delay] = useState(3000)
     const handleDelayChange = e => {
         e.stopPropagation();
         if (!isPaused) togglePaused(true);
-        console.log(e.target.value);
-        setDelay(e.target.value);
+        const inputVal = Number.parseInt(e.target.value)
+        set_delay(inputVal||3000);
     }
-
-
+    const handleDelayBlur = e => {
+        // console.log(e.target.value);
+        const inputVal = Number.parseInt(e.target.value)
+        let newVal = inputVal ? inputVal : 3000
+        newVal = (newVal >= 200) ? newVal : 3000
+        newVal = (newVal <= 60000) ? newVal : 3000
+        set_delay(newVal);
+        setDelay(newVal);
+    }
 
     /* ========== STORAGE FUNCS =========== */
     const setStorageBookmarkLatest = async () => {
@@ -732,8 +754,9 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                         <div className='basis-sm flex flex-col text-center justify-center'>
                             <label className='' for='delay'>⏳(ms):
                                 <input type='number' name='delayInput'
-                                    value={delay} min="200" max="60000"
-                                    onChange={e=>handleDelayChange(e)} />
+                                    value={_delay} min="200" max="60000"
+                                    onChange={e=>handleDelayChange(e)}
+                                    onBlur={e=>handleDelayBlur(e)} />
                             </label>
                         </div>
                         <button className={`basis-sm flex justify-center outline-1 outline-offset-1
