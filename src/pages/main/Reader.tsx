@@ -647,7 +647,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                 {/* ========== BOOKMARK TOOLBAR ==========*/}
                 <div className={`${isMinimized ? 'hidden' :''}
                     border border-gray-300/50 divide-solid divide-x-6
-                    divide-gray-400 mb-2 sm:mb-4 w-full flex flex-row text-sm`}>
+                    divide-gray-400 mb-2 sm:mb-4 w-full flex flex-row text-xs`}>
                     <button className='basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickClearBookmarks} >
                         Clear Progress</button>
@@ -720,7 +720,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                 {/* ========== TOOLBAR BOTTOM ========== */}
                 <div className={`flex pl-4 pr-4 pt-2 sm:py-4 bg-black
                     justify-around sm:justify-between sm:items-center sm:mt-4
-                    text-sm
+                    text-xs
                     ${!toolbarBottomIsMinimized ? 'flex-col sm:flex-row' : 'flex-row'}
                     ${isMinimized ? 'hidden' : ''}`}
                     ref={toolbarBottomRef}>
