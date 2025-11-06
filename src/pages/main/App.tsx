@@ -395,6 +395,11 @@ export default function App ({}) {
         inputTextAreaImportModalRef.current.value = ''
         const { returnValue } = importModalRef.current
 
+        if ((!returnValue) || (returnValue.length < 4)) {
+            setMsg(`Import Canceled`)
+            return null
+        }
+
         let decodedStr;
         try {
             decodedStr = decodeUnicode(returnValue)
@@ -454,18 +459,25 @@ export default function App ({}) {
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
         <ModalContainer modalRef={importModalRef} onClose={onCloseImportModal}>
-           <form method='dialog' className='flex flex-col'>
-                <label className='flex flex-col' for='importStorageInput'>
-                    <p>paste exported settings here:</p>
+           <form method='dialog' className='min-w-[25vw] min-h-[20vw] p-4 flex flex-col space-y-4 justify-between items-center'>
+                <h4 className=''>Import</h4>
+                <label className='grow flex flex-col w-8/10' for='importStorageInput'>
+                    Paste exported settings here:
                     <textarea
+                        className='border-gray-300 border mx-1 w-full grow'
+                        required
+                        minLength={4}
                         ref={inputTextAreaImportModalRef}
                         name='importStorageInput'></textarea>
                 </label>
-                <div className='flex flex-row'>
-                    <button
+                <div className='flex flex-row space-x-4'>
+                    <button type='submit' className='border-1 border-gray-300 p-1'
                         onClick={handleClickSubmitImportModal}>
                         confirm</button>
-                    <button autoFocus>cancel</button>
+                    <button type='button' className='border-1 border-gray-300 p-1'
+                        onClick={()=>importModalRef.current.close()}
+                        autoFocus>
+                        cancel</button>
                 </div>
             </form>
         </ModalContainer>
