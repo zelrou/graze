@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useSyncExternalStore } from 'react';
 
-let nextId = 0;
+//let nextId = 0;
 let toasts = []
 let listeners = [];
 
