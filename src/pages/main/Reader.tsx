@@ -649,14 +649,14 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                 <div className={`${isMinimized ? 'hidden' :''}
                     border border-gray-300/50 divide-solid divide-x-6
                     divide-gray-400 mb-2 sm:mb-4 w-full flex flex-row text-xs`}>
-                    <button className='basis-md p-1 hover:bg-yellow-500/50'
+                    <button className='grow basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickClearBookmarks} >
                         Clear Progress</button>
-                    <button className='basis-md p-1 hover:bg-green-500/50'
+                    <button className='grow basis-md p-1 hover:bg-green-500/50'
                         onClick={handleClickGetBookmarkLatest} >
                         Go Latest</button>
 
-                    <button className='basis-md p-1 hover:bg-fuchsia-500/50'
+                    <button className='grow basis-md p-1 hover:bg-fuchsia-500/50'
                         onClick={handleClickSetBookmarkLatest} >
                         Set Progress</button>
                 </div>
@@ -719,7 +719,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
-                <div className={`flex pl-4 pr-4 pt-2 sm:py-4 bg-black
+                <div className={`grow flex pl-4 pr-4 pt-2 sm:py-4 bg-black
                     justify-around sm:justify-between sm:items-center sm:mt-4
                     text-xs
                     ${!toolbarBottomIsMinimized ? 'flex-col sm:flex-row' : 'flex-row'}
@@ -751,7 +751,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                     </div>
 
                     {/* Auto Controls */}
-                    <div className="order-2 sm:order-4  sm:basis-md flex flex-row justify-between align-center">
+                    <div className="order-2 space-x-4 sm:order-4  sm:basis-md flex flex-row justify-between align-center">
                         <div className='basis-sm flex flex-col text-center justify-center'>
                             <label className='' for='delay'>⏳(ms):
                                 <input type='number' name='delayInput'
@@ -760,7 +760,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                                     onBlur={e=>handleDelayBlur(e)} />
                             </label>
                         </div>
-                        <button className={`basis-sm flex justify-center outline-1 outline-offset-1
+                        <button className={`place-self-center max-h-[2.2rem] basis-sm flex items-center justify-center outline-1 outline-offset-1
                             outline-slate-800/70 border border-gray-300 px-4
                             py-2 text-sm font-semibold text-gray-800
                             dark:border-transparent dark:bg-gray-700
