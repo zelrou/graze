@@ -19,10 +19,10 @@ const getTabs = async (queryInfo={}) => {
 }
 
 export const useTabStore = () => {
+    console.log('useTabStore loads')
     const [tabs, setTabs] = useState([])
     const tabsIds = () => (tabs.length > 0) ? tabs.map(t=>t.id).sort() : []
     const tabsUrls = () => (tabs.length > 0) ? tabs.map(t=>t.url).sort() : []
-    console.log('useTabStore loads')//, tabs);
 
     const handleUpdated = async (tabId, changeInfo, tabInfo) => {
         console.log('handleUpdated', tabs, tabId, changeInfo, tabInfo);
