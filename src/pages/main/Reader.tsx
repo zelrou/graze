@@ -146,24 +146,35 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
     const [_pIdx, set_pIdx] = useState(0)
     const [_cIdx, set_cIdx] = useState(0)
 
+    let partLength, paragraphLength, charLength;
     const handleLocationChange = e => {
         e.stopPropagation();
         togglePaused(true);
         console.log(e.target)
-        const newVal = e.target.value
+        const inputVal = Number.parseInt(e.target.value)
+        if (!inputVal) return null
         switch(e.target.name) {
-            case 'partIndexInput':
+            case 'partIndexInput': {
+                const newVal = (((inputVal<partLength) && (inputVal>=0))
+                    ? inputVal : 0)
                 set_sIdx(newVal)
                 set_pIdx(0)
                 set_cIdx(0)
                 break
-            case 'paragraphIndexInput':
+            }
+            case 'paragraphIndexInput': {
+                const newVal = (((inputVal<paragraphLength) && (inputVal>=0))
+                    ? inputVal : 0)
                 set_pIdx(newVal)
                 set_cIdx(0)
                 break
-            case 'charIndexInput':
+            }
+            case 'charIndexInput': {
+                const newVal = (((inputVal<charLength) && (inputVal>=0))
+                    ? inputVal : 0)
                 set_cIdx(newVal)
                 break
+            }
             default:
                 break
         }
@@ -182,7 +193,6 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         setLocation(s,p,c)
     }
 
-    let partLength, paragraphLength, charLength;
     if (paragraphUrl !== prevParagraphUrl) {
         console.log('url change')
         setPrevParagraphUrl(paragraphUrl)
@@ -207,9 +217,10 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
             set_cIdx(cIdx)
         }
         partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[_sIdx].paragraphs.length
+        paragraphLength =  structuredWork.parts[_sIdx].paragraphs.length
         charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
     }
+    const locationMatches = ((_cIdx === cIdx) && (_pIdx === pIdx) && (_sIdx === sIdx))
 
     return (<div className='order-5 sm:order-4 w-full md:w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
         <form method="post" onSubmit={handleSubmitSettings}
@@ -247,8 +258,8 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
                 <span className='mr-2'>{ `/${charLength-1}` }</span>
             </label>
         </div>
-        <button type="submit"
-           className='bg-indigo-500 hover:bg-fuchsia-500'>
+        <button disabled={locationMatches} type="submit"
+           className={locationMatches ? 'bg-zinc-500' : 'bg-indigo-500 hover bg-fuchsia-500'}>
            {svgArrowTurnDownLeft}</button>
     </form></div>)
 }
@@ -260,7 +271,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
-    const [fontSize, setFontSize] = useState(1.5);
+    const defaultFontSize = (window.screen.width < 641) ? 1 : 1.5;
+    const [fontSize, setFontSize] = useState(defaultFontSize);
 
     const [delay, setDelay] = useState(DEFAULTS.DELAY);
 
@@ -328,7 +340,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         const prevPartIndex = partIndex - 1;
         let prevCharLength;
         let prevParagraphLength;
-        console.log('getPrevMainText', prevCharIndex, prevParagraphIndex, prevPartIndex)
+        console.log('getPrevMainText', charIndex, prevCharIndex, prevParagraphIndex, prevPartIndex)
         if (prevCharIndex < 0) { // we MAY need to go back a paragraph
             if (prevParagraphIndex < 0) { // we need to go back a part
                 if (prevPartIndex < 0) { // we are at the beginnning
@@ -342,7 +354,8 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                     // set paragraphIndex to last paragraph of previous part
                     setParagraphIndex(prevParagraphLength - 1);
                     // set charIndex to last chars of previous paragraph
-                    setCharIndex(prevCharLength - charInterval);
+                    const cIdx = Math.max(0, prevCharLength - charInterval)
+                    setCharIndex(cIdx);
                 }
             } else if (charIndex>0) { // we need to go to beginning of paragraph
                 setCharIndex(0);
@@ -393,17 +406,18 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         e.preventDefault();
         e.stopPropagation();
         if (!isPaused) togglePaused(isPaused => true);
-        setCharInterval(charInterval => Number(e.target.value))
+        const inputVal = Number.parseInt(e.target.value)
+        let newVal = inputVal ? inputVal : 200
+        newVal = (newVal>=1) && (newVal<=1000) ? newVal : 200
+        setCharInterval(charInterval => newVal)
     }
 
     {/* ---------- fontSize ---------- */}
     const handleFontSizeChange = e => {
-        console.log('what')
         if (!isPaused) togglePaused(isPaused => true)
         e.preventDefault()
         e.stopPropagation()
         const size = e.target.value
-        console.log(size)
         let _fontSize;
         if (size < 0.75) { _fontSize = 0.75; }
         else if (size > 8) { _fontSize = 8; }
@@ -418,19 +432,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
     /* TODO isPaused, delay dependency can be removed? */
     useEffect(()=>{
-        console.log('useEffectRuns')
+        console.log('useEffect[isPaused,delay]')
         let intervalID;
         if (!isPaused){
             intervalID = setInterval(()=>{
-                setClock(clock=>clock+1)
-                /*console.log('interval tick',clock,'wordIdx: ' + charIndex)*/
+                console.log('tick')
                 if (!isPaused) onTick();
             }, delay);
         }
         return () => clearInterval(intervalID)
     },[isPaused, delay])
-
-    // console.log('external tick',clock,'wordIdx: ' + wordIndex)
 
     const handleClickPause = () => {
         console.log('handleClickPause')
@@ -443,7 +454,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     /* ========== KEYBINDINGS ========== */
     const handleKey = (e) => {
         e.preventDefault();
-        console.log(e.type, e.key, e.keyCode, e.charCode)
+        console.log('handleKey', e.type, e.key, e.keyCode, e.charCode)
         switch (e.keyCode) {
             case 27: // esc
                 handleClickMinimize();
@@ -460,19 +471,25 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             default:
                 break;
         }
-
-        if (e.keyCode === 32) handleClickPause();
     }
 
     /* ========== INPUT FORM HANDLING ========== */
+    const [_delay, set_delay] = useState(3000)
     const handleDelayChange = e => {
         e.stopPropagation();
         if (!isPaused) togglePaused(true);
-        console.log(e.target.value);
-        setDelay(e.target.value);
+        const inputVal = Number.parseInt(e.target.value)
+        set_delay(inputVal||3000);
     }
-
-
+    const handleDelayBlur = e => {
+        // console.log(e.target.value);
+        const inputVal = Number.parseInt(e.target.value)
+        let newVal = inputVal ? inputVal : 3000
+        newVal = (newVal >= 200) ? newVal : 3000
+        newVal = (newVal <= 60000) ? newVal : 3000
+        set_delay(newVal);
+        setDelay(newVal);
+    }
 
     /* ========== STORAGE FUNCS =========== */
     const setStorageBookmarkLatest = async () => {
@@ -566,14 +583,15 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             isMinimized ? 'bottom-0' : 'top-0',
             isMinimized ? 'bg-transparent' :'bg-zinc-950/80',
             isMinimized ? 'w-xs' : 'w-screen',
-            isMinimized ? 'h-20' : 'h-screen'
+            isMinimized ? 'h-20' : 'h-screen',
+            !paragraphUrl ? 'hidden' : ''
             ].join(' ')
             }>
         {/* ========== READER MODAL ROOT ========== */}
         <div id='reader-modal-root' className={ ['z-50 flex flex-col',
-            `md:pt-4 font-sans text-lg text-zinc-300
-            border-2 border-gray-300/50
-            rounded-sm bg-zinc-900 relative align-start justify-start`,
+            `pt-1 md:pt-4 font-sans text-lg text-zinc-300
+            sm:border-2 border-gray-300/50
+            rounded-sm bg-zinc-900 relative align-start justify-center`,
             isMinimized ? 'w-fit' : 'sm:w-screen lg:w-7/10',
             isMinimized ? 'h-full' : 'h-screen sm:h-screen lg:h-[70vh] ',
             isMinimized ? 'place-self-start' : 'place-self-center'
@@ -591,10 +609,16 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                     </button>}
                 </div>
 
-                {/* ---------- WINDOW TITLE ---------- */}
+                {/* ---------- WINDOW TITLE ----------
                 <div className='grow flex flex-row justify-center'>
                     <h1>Reader</h1></div>
-
+                */}
+                {/* ========== WORK AUTHOR TITLE BAR ==========*/}
+                <div className={`grow flex flex-row w-full items-center justify-around text-sm sm:text-md`}>
+                    {!structuredWork.author ? null : <h1 className='font-bold'>{structuredWork.author}</h1>}
+                    {!structuredWork.title ? null : <h1 className='italic'>{structuredWork.title }</h1>}
+                    {structuredWork.title || structuredWork.author ? null : <h1 className='font-sans'>{paragraphUrl}</h1>}
+                </div>
                 {/* ---------- MIN/MAX READER WINDOW ---------- */}
                 <div className='flex-shrink flex flex-row justify-center'>
                     {/*<div className=''>{!isMinimized && <button className=''>settings</button>}</div>*/}
@@ -617,18 +641,14 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             </div>
 
             <div className={!isOpenSearchContainer ? 'contents h-full' : 'hidden'}>
-                {/* ========== WORK AUTHOR TITLE BAR ==========*/}
-                <div className='flex flex-row w-full justify-around'>
-                    {!structuredWork.author ? null : <h1 className='font-bold'>{structuredWork.author}</h1>}
-                    {!structuredWork.title ? null : <h1 className='italic'>{structuredWork.title || paragraphUrl}</h1>}
-                </div>
+
 
 
 
                 {/* ========== BOOKMARK TOOLBAR ==========*/}
                 <div className={`${isMinimized ? 'hidden' :''}
                     border border-gray-300/50 divide-solid divide-x-6
-                    divide-gray-400 mb-4 w-full flex flex-row text-sm`}>
+                    divide-gray-400 mb-2 sm:mb-4 w-full flex flex-row text-xs`}>
                     <button className='basis-md p-1 hover:bg-yellow-500/50'
                         onClick={handleClickClearBookmarks} >
                         Clear Progress</button>
@@ -699,8 +719,11 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
 
                 {/* ========== TOOLBAR BOTTOM ========== */}
-                <div className={['flex flex-col sm:flex-row pl-4 pr-4 pb-4 sm:pt-4 bg-black justify-around sm:justify-between sm:items-center sm:mt-4',
-                    'text-sm', isMinimized ? 'hidden' : ''].join(' ') }
+                <div className={`flex pl-4 pr-4 pt-2 sm:py-4 bg-black
+                    justify-around sm:justify-between sm:items-center sm:mt-4
+                    text-xs
+                    ${!toolbarBottomIsMinimized ? 'flex-col sm:flex-row' : 'flex-row'}
+                    ${isMinimized ? 'hidden' : ''}`}
                     ref={toolbarBottomRef}>
                     <div className={`flex pt-2 order-1 sm:order-last sm:hidden`}>
                         <button
@@ -732,15 +755,18 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
                         <div className='basis-sm flex flex-col text-center justify-center'>
                             <label className='' for='delay'>⏳(ms):
                                 <input type='number' name='delayInput'
-                                    value={delay} min="200" max="60000"
-                                    onChange={e=>handleDelayChange(e)} />
+                                    value={_delay} min="200" max="60000"
+                                    onChange={e=>handleDelayChange(e)}
+                                    onBlur={e=>handleDelayBlur(e)} />
                             </label>
                         </div>
                         <button className={`basis-sm flex justify-center outline-1 outline-offset-1
                             outline-slate-800/70 border border-gray-300 px-4
                             py-2 text-sm font-semibold text-gray-800
                             dark:border-transparent dark:bg-gray-700
-                            dark:text-gray-200`}
+                            dark:text-gray-200
+                            ${!toolbarBottomIsMinimized && defaultToolbarBottomState ? 'hidden' : ''}
+                            `}
                             onClick={handleClickPause}> {/* TODO */}
                             {isPaused ? svgPlay : svgPause }</button>
                     </div>

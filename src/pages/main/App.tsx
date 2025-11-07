@@ -185,9 +185,10 @@ const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) =
                 <td className='border-b p-2 border-gray-300 font-sans'>{t.title}</td>
                 {/*<td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>*/}
                 <td className='border-b p-2 border-gray-300 text-right font-mono'>{sIdx}.{pIdx}.{cIdx}</td>
-                <td className='border-b p-2 border-gray-300 text-center'><button className=''
-                    onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
-                    {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
+                <td className='border-b p-2 border-gray-300 text-center'>
+                    <button className='hover:bg-emerald-500/50 p-1'
+                        onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
+                        {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
             </tr>) })
 }
 
@@ -214,12 +215,18 @@ const PrevUrlList = ({tabs, latestMarks}) => {
     return !prevTabs.length ? null : prevTabs.map(pt => {
         return Object.keys(latestMarks).length && (
             <tr key={pt.url}>
-                <td className='border-b p-2 border-gray-300 font-sans'>{pt.url}</td>
-                <td className='border-b p-2 border-gray-300 text-right font-mono'>{pt.sIdx}.{pt.pIdx}.{pt.cIdx}</td>
-                <td className='border-b p-2 border-gray-300'><button className=''
+                <td className='border-b p-2 border-gray-300 font-sans'>
+                    <div className='flex gap-1'>
+                        <button className='p-1 hover:bg-rose-500/50'
+                            onClick={(e) => handleClickRemovePreviousTab(e, pt.url)}>
+                            {svgXMark}</button>
+                        <span className='text-sm p-1'>{pt.url}</span></div></td>
+                <td className='border-b p-2 border-gray-300 text-sm text-right font-mono'>{pt.sIdx}.{pt.pIdx}.{pt.cIdx}</td>
+                <td className='border-b p-2 border-gray-300 text-center'>
+                    <button className='hover:bg-yellow-500/50 p-1'
                     onClick={() => browser.tabs.create({url:pt.url})}>
-                    {svgArrowTopRightOnSquare}</button></td>
-                <td><button onClick={(e) => handleClickRemovePreviousTab(e, pt.url)}>{svgXMark}</button></td>
+                    {svgArrowTopRightOnSquare}</button>
+                </td>
             </tr>) })
 }
 
@@ -237,7 +244,7 @@ const ModalContext = createContext(null)
 const ModalContainer = ({...props}) => {
     /* TODO pass all props to dialog and props.modalContext to ModalContext? */
     const {children, modalRef, onClose, className} = props;
-    const defaultClass = 'backdrop:bg-black/60 place-self-center'
+    const defaultClass = `backdrop:bg-black/60 place-self-center bg-zinc-100 text-black sm:border-salmon-500 sm:border-4`
     const classStr = `${defaultClass} ${className}`
     return (
         <ModalContext value={modalRef}>
@@ -251,31 +258,34 @@ const ModalContainer = ({...props}) => {
     )
 }
 
+
 const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
     const modalRef = useContext(ModalContext)
-    return (<div className='p-4 space-y-4 flex flex-col items-center'>
+    return (<div className={`p-4 space-y-4 flex flex-col items-center `}>
         <h2 className='text-center text-lg'>Welcome!</h2>
-        <div className=''>
-            <p>
-                In another tab, open a page you want to read (e.g. a <a target="_blank" href="https://en.wikipedia.org/wiki/Special:Random">random wikipedia article</a>).
+        <div className='text-md'>
+            <p className='my-3'>
+                In another tab, open a page you want to read (e.g. a&nbsp;
+                <a className='underline' target="_blank" href="https://en.wikipedia.org/wiki/Special:Random">random wikipedia article</a>).
                 <br />
                 You'll see the page in your Open Tabs list.
                 <br />
                 Click the arrow to the right of the corresponding tab to enter the Reader Mode.
             </p>
-            <p>From there you can ...</p>
-            <ul>
-                <li>+ Click the arrows on the left and right to seek forward and back in the text</li>
-                <li>+ Use the arrow keys to seek</li>
-                <li>+ Click the play button at the bottom to auto-seek</li>
+            <p className='my-3'>From there you can ...</p>
+            <ul className='ml-5 mt-2 list-disc'>
+                <li>Click the arrows on the left and right to seek forward and back in the text</li>
+                <li>Use the arrow keys to seek</li>
+                <li>Click the play button at the bottom to auto-seek</li>
             </ul>
-            <p>As you seek, you'll see your progress and location update</p>
-            <p>Click Mark Progress so you can come back to that position</p>
+            <p className='my-3'>As you seek, you'll see your progress and location update</p>
+            <p className='my-3'>Click Mark Progress so you can come back to that position</p>
         </div>
-        <div className='flex flex-row space-x-4'>
+        <div className='flex flex-row space-x-4 text-sm'>
             <button
                 onClick={ async() => {
                     await setLocalStorage('graze', {'setup': false})
+                    setShowHelp(false)
                     modalRef.current.close()
                 }}
                 className='border-1 border-gray-300 p-1'>dont show this again</button>
@@ -318,17 +328,19 @@ export default function App ({}) {
     const modalRef = useRef(null)
     const isSetup = (localStorage.hasOwnProperty('graze')
         && localStorage['graze'].setup)
-    const ignore = (localStorage.hasOwnProperty('graze')
-        && localStorage['graze'].ignore)
-
-    console.log('WELCOME', isSetup)
-
-    const [showHelp, setShowHelp] = useState(true)
+    const [showHelp, setShowHelp] = useState(false)
     const handleClickHelp = () => {
         setShowHelp(true)
     };
+    console.log('WELCOME setup,help', isSetup,showHelp)
+    useEffect(()=>{
+        if (isSetup) setShowHelp(true);
+    }, [isSetup, setShowHelp])
     if (modalRef.current && ((isSetup&&showHelp) || (showHelp&&!isSetup))) {
         modalRef.current.showModal();
+    }
+    const onCloseWelcomeModal=()=> {
+        if (showHelp) setShowHelp(false)
     }
 
     /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
@@ -371,7 +383,7 @@ export default function App ({}) {
     }
 
 
-    /* ========== TOOLBAR: IMPORT STORAGE ==========*/
+    /* ========== TOOLBAR & MODAL: IMPORT STORAGE ==========*/
     const importModalRef = useRef(null)
     const inputTextAreaImportModalRef = useRef(null)
     const handleClickOpenImportModal = (e) => {
@@ -387,6 +399,11 @@ export default function App ({}) {
     const onCloseImportModal = async (e) => {
         inputTextAreaImportModalRef.current.value = ''
         const { returnValue } = importModalRef.current
+
+        if ((!returnValue) || (returnValue.length < 4)) {
+            setMsg(`Import Canceled`)
+            return null
+        }
 
         let decodedStr;
         try {
@@ -441,26 +458,38 @@ export default function App ({}) {
     /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
-    return (<div className='relative w-screen h-full flex flex-col space-y-4 items-center bg-zinc-950 text-zinc-200'>
-        <ModalContainer modalRef={modalRef}>
+    return (<div className={`relative w-screen min-h-screen h-full flex
+        flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
+
+        {/* ========== MODALS ========== */}
+        <ModalContainer modalRef={modalRef} onClose={onCloseWelcomeModal}>
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
         <ModalContainer modalRef={importModalRef} onClose={onCloseImportModal}>
-           <form method='dialog' className='flex flex-col'>
-                <label className='flex flex-col' for='importStorageInput'>
-                    <p>paste exported settings here:</p>
+           <form method='dialog' className='min-w-[25vw] min-h-[20vw] p-4 flex flex-col space-y-4 justify-between items-center'>
+                <h4 className=''>Import</h4>
+                <label className='grow flex flex-col w-8/10' for='importStorageInput'>
+                    Paste exported settings here:
                     <textarea
+                        className='border-gray-300 border mx-1 w-full grow'
+                        required
+                        minLength={4}
                         ref={inputTextAreaImportModalRef}
                         name='importStorageInput'></textarea>
                 </label>
-                <div className='flex flex-row'>
-                    <button
+                <div className='flex flex-row space-x-4'>
+                    <button type='submit' className='border-1 border-gray-300 p-1'
                         onClick={handleClickSubmitImportModal}>
                         confirm</button>
-                    <button autoFocus>cancel</button>
+                    <button type='button' className='border-1 border-gray-300 p-1'
+                        onClick={()=>importModalRef.current.close()}
+                        autoFocus>
+                        cancel</button>
                 </div>
             </form>
         </ModalContainer>
+
+        {/* ========== APP CONTAINER ========== */}
         <div className='flex flex-col w-screen bg-zinc-800'>
             {/* ========== TOP TOOLBAR ========== */}
             <div id='app-toolbar-top' className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
@@ -517,10 +546,10 @@ export default function App ({}) {
         <div className='w-screen md:w-7/10 overflow-auto'>
             <table className='table-fixed md:table-auto w-full bg-zinc-800 border-gray-300/50 border-4'>
                 <thead className='text-left text-sans text-xs border-b-2 border-gray-300'><tr>
-                    <th className='p-2'>TITLE</th>
+                    <th className='p-2 w-3/10'>TITLE</th>
                     {/*<th className='p-2'>URL</th>*/}
-                    <th className='p-2 text-right'>LOCATION</th>
-                    <th></th>
+                    <th className='p-2 w-1/10 text-right'>LOCATION</th>
+                    <th className='w-1/10'></th>
                 </tr></thead>
                 <tbody className='text-left'>
                     <UrlList
@@ -536,10 +565,9 @@ export default function App ({}) {
         <div className='w-screen md:w-7/10 overflow-auto'>
             <table className='table-fixed md:table-auto w-full'>
                 <thead><tr>
-                    <th>Url</th>
-                    <th>Location</th>
-                    <th></th>
-                    <th></th>
+                    <th className='p-2 w-3/10'>Url</th>
+                    <th className='p-2 w-1/10 text-right'>Location</th>
+                    <th className='w-1/10'></th>
                 </tr></thead>
                 <tbody>
                     <PrevUrlList tabs={ tabs } latestMarks={ localStorage } />

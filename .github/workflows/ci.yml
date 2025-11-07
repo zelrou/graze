@@ -1,4 +1,4 @@
-name: Build and Zip Chrome Extension
+name: Build and Zip Firefox Extension
 
 on:
   workflow_dispatch:
@@ -10,24 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 2
- 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'yarn'
- 
-      - name: Install dependencies
-        run: yarn
- 
-      - name: Build Chrome
-        run: yarn build:chrome
 
-      - name: Upload Chrome extension artifacts
-        uses: actions/upload-artifact@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
         with:
-          name: vite-web-extension-chrome
-          path: dist_chrome
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm
+
+      - name: Build Firefox
+        run: pnpm build:firefox
+
+      - name: Upload Firefox extension artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: graze-firefox
+          path: dist_firefox
