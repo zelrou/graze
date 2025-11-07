@@ -8,4 +8,6 @@
             transform: rotate(360deg);
         }
     }
+
+    --color-salmon-500: #c4746e;
 }

@@ -244,7 +244,7 @@ const ModalContext = createContext(null)
 const ModalContainer = ({...props}) => {
     /* TODO pass all props to dialog and props.modalContext to ModalContext? */
     const {children, modalRef, onClose, className} = props;
-    const defaultClass = 'backdrop:bg-black/60 place-self-center'
+    const defaultClass = `backdrop:bg-black/60 place-self-center bg-zinc-100 text-black sm:border-salmon-500 sm:border-4`
     const classStr = `${defaultClass} ${className}`
     return (
         <ModalContext value={modalRef}>
@@ -258,28 +258,30 @@ const ModalContainer = ({...props}) => {
     )
 }
 
+
 const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
     const modalRef = useContext(ModalContext)
-    return (<div className='p-4 space-y-4 flex flex-col items-center'>
+    return (<div className={`p-4 space-y-4 flex flex-col items-center `}>
         <h2 className='text-center text-lg'>Welcome!</h2>
-        <div className=''>
-            <p>
-                In another tab, open a page you want to read (e.g. a <a target="_blank" href="https://en.wikipedia.org/wiki/Special:Random">random wikipedia article</a>).
+        <div className='text-md'>
+            <p className='my-3'>
+                In another tab, open a page you want to read (e.g. a&nbsp;
+                <a className='underline' target="_blank" href="https://en.wikipedia.org/wiki/Special:Random">random wikipedia article</a>).
                 <br />
                 You'll see the page in your Open Tabs list.
                 <br />
                 Click the arrow to the right of the corresponding tab to enter the Reader Mode.
             </p>
-            <p>From there you can ...</p>
-            <ul>
-                <li>+ Click the arrows on the left and right to seek forward and back in the text</li>
-                <li>+ Use the arrow keys to seek</li>
-                <li>+ Click the play button at the bottom to auto-seek</li>
+            <p className='my-3'>From there you can ...</p>
+            <ul className='ml-5 mt-2 list-disc'>
+                <li>Click the arrows on the left and right to seek forward and back in the text</li>
+                <li>Use the arrow keys to seek</li>
+                <li>Click the play button at the bottom to auto-seek</li>
             </ul>
-            <p>As you seek, you'll see your progress and location update</p>
-            <p>Click Mark Progress so you can come back to that position</p>
+            <p className='my-3'>As you seek, you'll see your progress and location update</p>
+            <p className='my-3'>Click Mark Progress so you can come back to that position</p>
         </div>
-        <div className='flex flex-row space-x-4'>
+        <div className='flex flex-row space-x-4 text-sm'>
             <button
                 onClick={ async() => {
                     await setLocalStorage('graze', {'setup': false})
@@ -337,6 +339,9 @@ export default function App ({}) {
     if (modalRef.current && ((isSetup&&showHelp) || (showHelp&&!isSetup))) {
         modalRef.current.showModal();
     }
+    const onCloseWelcomeModal=()=> {
+        if (showHelp) setShowHelp(false)
+    }
 
     /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
     const handleClickMinimize = () => {
@@ -378,7 +383,7 @@ export default function App ({}) {
     }
 
 
-    /* ========== TOOLBAR: IMPORT STORAGE ==========*/
+    /* ========== TOOLBAR & MODAL: IMPORT STORAGE ==========*/
     const importModalRef = useRef(null)
     const inputTextAreaImportModalRef = useRef(null)
     const handleClickOpenImportModal = (e) => {
@@ -455,7 +460,9 @@ export default function App ({}) {
 
     return (<div className={`relative w-screen min-h-screen h-full flex
         flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
-        <ModalContainer modalRef={modalRef}>
+
+        {/* ========== MODALS ========== */}
+        <ModalContainer modalRef={modalRef} onClose={onCloseWelcomeModal}>
             <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
         </ModalContainer>
         <ModalContainer modalRef={importModalRef} onClose={onCloseImportModal}>
@@ -481,6 +488,8 @@ export default function App ({}) {
                 </div>
             </form>
         </ModalContainer>
+
+        {/* ========== APP CONTAINER ========== */}
         <div className='flex flex-col w-screen bg-zinc-800'>
             {/* ========== TOP TOOLBAR ========== */}
             <div id='app-toolbar-top' className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
