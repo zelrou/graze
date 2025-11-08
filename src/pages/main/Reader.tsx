@@ -1,6 +1,6 @@
 import {
     useState, useEffect, useEffectEvent, createContext, useContext,
-    memo, useMemo, useRef
+    memo, useMemo, useRef, useCallback
 } from 'react';
 import { isInDenylist } from './hooks/useTabStore';
 
@@ -84,10 +84,10 @@ function* genParagraphs(sw) {
 
 const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer}) => {
     const [searchQuery, setSearchQuery] = useState('')
-    const [prevParagraphUrl, setPrevParagraphUrl] = useState()
+    const prevParagraphUrl = useRef(null)
     const searchInputRef = useRef(null)
-    if (paragraphUrl !== prevParagraphUrl) {
-        setPrevParagraphUrl(paragraphUrl)
+    if (paragraphUrl !== prevParagraphUrl.current) {
+        prevParagraphUrl.current = paragraphUrl
         setSearchQuery('')
         if (searchInputRef.current) searchInputRef.current.value = ''
     }
@@ -149,7 +149,7 @@ const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer
 
 const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePaused}) => {
     const { setLocation } = useContext(SetLocationContext)
-    const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
+    const prevParagraphUrl = useRef(null)
     const [prevSIdx, setPrevSIdx] = useState(null)
     const [prevPIdx, setPrevPIdx] = useState(null)
     const [prevCIdx, setPrevCIdx] = useState(null)
@@ -204,9 +204,9 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         setLocation(s,p,c)
     }
 
-    if (paragraphUrl !== prevParagraphUrl) {
+    if (paragraphUrl !== prevParagraphUrl.current) {
         console.log('url change')
-        setPrevParagraphUrl(paragraphUrl)
+        prevParagraphUrl.current = paragraphUrl
         set_sIdx(0)
         set_pIdx(0)
         set_cIdx(0)
@@ -278,6 +278,7 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
 export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused,
     addToast}) {
+    console.log('================= Reader ===================')
     const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
@@ -289,58 +290,37 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
     /* ========== SEARCH STATE & LOCATION CONTEXT ========== */
     const [isOpenSearchContainer, setIsOpenSearchContainer] = useState(false)
-    const setLocation = (s=null, p=null, c=null) => {
-        if (!s && !p && !c) return null
-        if (s) setPartIndex(s)
-        if (p) setParagraphIndex(p)
-        if (c) setCharIndex(c)
-    }
+    const setLocation = useCallback((s=null, p=null, c=null) => {
+        if ((s===null) && (p===null) && (c===null)) return null
+        setPartIndex(s)
+        setParagraphIndex(p)
+        setCharIndex(c)
+    }, [setPartIndex, setParagraphIndex, setCharIndex])
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
+    const prevParagraphUrl = useRef(null)
     let partLength;
+    let currentPart;
     let paragraphLength;
+    let currentParagraph;
     let charLength;
     let heading;
     let mainText;
-    const [prevParagraphUrl, setPrevParagraphUrl] = useState('')
-    if (paragraphUrl !== prevParagraphUrl) {
-        setPrevParagraphUrl(paragraphUrl);
-        setPartIndex(0);
-        setParagraphIndex(0);
-        setCharIndex(0);
-        partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[0].paragraphs.length
-        charLength = structuredWork.parts[0].paragraphs[0].length
-        heading = structuredWork.parts[0].heading
-        mainText = structuredWork.parts[0].paragraphs[0].slice(0, charInterval)
+    if (paragraphUrl !== prevParagraphUrl.current) {
+        console.log('READER: resetting location')
+        prevParagraphUrl.current = paragraphUrl;
+        setLocation(0,0,0)
         setIsMinimized(false);
     } else {
+        console.log('READER same url', paragraphUrl, prevParagraphUrl.current)//, structuredWork)
         partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[partIndex].paragraphs.length
-        charLength = structuredWork.parts[partIndex].paragraphs[paragraphIndex].length
-        heading = structuredWork.parts[partIndex].heading
-        mainText = structuredWork.parts[partIndex].paragraphs[paragraphIndex].slice(charIndex, charIndex + charInterval)
-     }
-
-    /* ========== BACKGROUND PAGE MESSAGING ========== */
-    useEffect(()=>{
-        const bgSender = (message) => {
-            return browser.runtime.sendMessage({ content: `Function call: ${message}` });
-        }
-        const bgReceiver = (request, sender, sendResponse) => {
-            console.log(request, sender, sendResponse)
-            if (request.data.action === "open_contentScript") {
-                setIsClosed(false);
-            }
-            const msg = 'msg from content'
-            sendResponse(msg);
-            bgSender(msg);
-        };
-        browser.runtime.onMessage.addListener(bgReceiver);
-        return () => browser.runtime.onMessage.removeListener(bgReceiver);
-    })
-
-
+        currentPart = structuredWork.parts[partIndex]
+        paragraphLength = currentPart.paragraphs.length
+        currentParagraph = currentPart.paragraphs[paragraphIndex]
+        charLength = currentParagraph.length
+        heading = currentPart.heading
+        mainText = currentParagraph.slice(charIndex, charIndex+charInterval)
+    }
 
     /* ========== SEEKING ========== */
     /* TODO structuredWork class
@@ -440,13 +420,11 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     const onTick = useEffectEvent(()=>{
         getNextMainText();
     });
-
-    /* TODO isPaused, delay dependency can be removed? */
     useEffect(()=>{
         console.log('useEffect[isPaused,delay]')
         let intervalID;
         if (!isPaused){
-            intervalID = setInterval(()=>{
+            intervalID= setInterval(()=>{
                 console.log('tick')
                 if (!isPaused) onTick();
             }, delay);
@@ -600,9 +578,10 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             }>
         {/* ========== READER MODAL ROOT ========== */}
         <div id='reader-modal-root' className={ ['z-50 flex flex-col',
-            `pt-1 md:pt-4 font-sans text-lg text-zinc-300
+            `pt-1 font-sans text-lg text-zinc-300
             sm:border-2 border-gray-300/50
             rounded-sm bg-zinc-900 relative align-start justify-center`,
+            isMinimized ? '' : 'md:pt-4',
             isMinimized ? 'w-fit' : 'sm:w-screen lg:w-7/10',
             isMinimized ? 'h-full' : 'h-screen sm:h-screen lg:h-[70vh] ',
             isMinimized ? 'place-self-start' : 'place-self-center'
