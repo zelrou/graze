@@ -2,6 +2,7 @@ import {
     useState, useEffect, useEffectEvent, createContext, useContext,
     memo, useMemo, useRef
 } from 'react';
+import { isInDenylist } from './hooks/useTabStore';
 
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
@@ -644,9 +645,12 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             </div>
 
             {/* ========== SEARCH RESULTS ==========*/}
-            <div className={isOpenSearchContainer ? 'grow flex flex-col align-center overflow-scroll relative' : 'hidden'}>
+            <div className={ (isOpenSearchContainer && !isMinimized)
+                ? 'grow flex flex-col align-center overflow-scroll relative'
+                : 'hidden' }
+                >
                 <SetLocationContext value={{setLocation}}>
-                    { !paragraphUrl
+                    { (!paragraphUrl || !structuredWork)
                         ? null
                         : ( <SearchContainer
                             paragraphUrl={paragraphUrl}
