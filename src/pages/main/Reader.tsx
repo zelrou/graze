@@ -306,11 +306,13 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     let charLength;
     let heading;
     let mainText;
-    if (paragraphUrl !== prevParagraphUrl.current) {
+    const paragraphChanged = paragraphUrl !== prevParagraphUrl.current;
+    if (paragraphChanged) {
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
         setLocation(0,0,0)
         setIsMinimized(false);
+        setIsOpenSearchContainer(false);
     } else {
         console.log('READER same url', paragraphUrl, prevParagraphUrl.current)//, structuredWork)
         partLength = structuredWork.parts.length
