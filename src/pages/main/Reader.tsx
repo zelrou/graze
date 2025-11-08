@@ -2,7 +2,6 @@ import {
     useState, useEffect, useEffectEvent, createContext, useContext,
     memo, useMemo, useRef, useCallback
 } from 'react';
-import { isInDenylist } from './hooks/useTabStore';
 
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
@@ -306,6 +305,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     let charLength;
     let heading;
     let mainText;
+    let isCursorAtEnd;
     const paragraphChanged = paragraphUrl !== prevParagraphUrl.current;
     if (paragraphChanged) {
         console.log('READER: resetting location')
@@ -313,6 +313,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         setLocation(0,0,0)
         setIsMinimized(false);
         setIsOpenSearchContainer(false);
+        isCursorAtEnd = false;
     } else {
         console.log('READER same url', paragraphUrl, prevParagraphUrl.current)//, structuredWork)
         partLength = structuredWork.parts.length
@@ -322,6 +323,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         charLength = currentParagraph.length
         heading = currentPart.heading
         mainText = currentParagraph.slice(charIndex, charIndex+charInterval)
+        isCursorAtEnd = false;
     }
 
     /* ========== SEEKING ========== */
@@ -377,6 +379,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         if ( nextcharIndex > charLength - 1) { // we are at end of a paragraph
             if (nextParagraphIndex > paragraphLength - 1) { // we are part end
                 if (nextPartIndex > partLength - 1) { // we are at end of work
+                    isCursorAtEnd = true;
                     return null;
                 } else { // move to next part
                     setPartIndex(nextPartIndex);
@@ -419,27 +422,43 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     }
 
     {/* ----------autoPlay ---------- */}
+    const intervalID = useRef(null)
+
     const onTick = useEffectEvent(()=>{
-        getNextMainText();
-    });
-    useEffect(()=>{
-        console.log('useEffect[isPaused,delay]')
-        let intervalID;
-        if (!isPaused){
-            intervalID= setInterval(()=>{
+        console.log('=====tick=======')
+        if (isPaused) clearInterval(intervalID.current)
+        if (isCursorAtEnd && !isPaused) {
+            clearInterval(intervalID.current)
+            intervalID.current = null
+            togglePaused(true)
+        }
+        if (!isPaused) getNextMainText();
+    })
+
+    console.log('Reader pre effect interval:', isCursorAtEnd, intervalID, isPaused)
+    const createInterval = () => {
+        if (!isPaused && !isCursorAtEnd && !intervalID.current) {
+            intervalID.current = setInterval(()=>{
                 console.log('tick')
-                if (!isPaused) onTick();
+                onTick()
             }, delay);
         }
-        return () => clearInterval(intervalID)
-    },[isPaused, delay])
+    }
+
+    useEffect(()=>{
+        createInterval()
+    },[isPaused, delay, isCursorAtEnd, getNextMainText])
 
     const handleClickPause = () => {
         console.log('handleClickPause')
         if ( isPaused ) {
+            createInterval()
             togglePaused(isPaused => false)
         } else {
-            togglePaused(isPaused => true) }
+            clearInterval(intervalID.current)
+            intervalID.current = null
+            togglePaused(isPaused => true)
+        }
     }
 
     /* ========== KEYBINDINGS ========== */
