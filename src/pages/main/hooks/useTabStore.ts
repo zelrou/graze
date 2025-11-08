@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 export const denylistProtocol = ['about:', 'moz-extension:', 'graze']
 
 export const isInDenylist = (s) => {
-    if (s === 'graze') return true
+    if (s === 'graze' || !s) return true
     const { protocol } = URL.parse(s);
-    return denylistProtocol.includes(protocol)
+    const res = denylistProtocol.includes(protocol)
+    console.log('isInDenylist', s,  res)
+    return res
 }
 
 const getTabs = async (queryInfo={}) => {
