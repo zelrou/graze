@@ -41,7 +41,7 @@ const svgCog6Tooth = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
 
 
 const SetLocationContext = createContext(null)
-const SearchResultTableRow = ({match}) => {
+const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
     const { setLocation } = useContext(SetLocationContext)
     const sIdx = match.at(0)
     const pIdx = match.at(1)
@@ -50,15 +50,19 @@ const SearchResultTableRow = ({match}) => {
     return (<tr>
         <td className='border-b p-2 pl-8 border-gray-300'>{match[3]}</td>
         <td className='border-b p-2 pl-8 border-gray-300 text-right'>{locString}</td>
-        <td className='border-b p-2 pl-8 border-gray-300'><button
-            onClick={()=>setLocation(sIdx, pIdx, cIdx)}>
-            {svgChevronRight2}</button></td>
+        <td className='border-b p-2 pl-8 border-gray-300'>
+            <button
+                onClick={()=>{
+                    setLocation(sIdx, pIdx, cIdx)
+                    setIsOpenSearchContainer(false)
+                }}>
+                {svgChevronRight2}</button></td>
         </tr>)
 }
 
-const SearchResultTable = memo(({searchResults, paragraphUrl}) => {
+const SearchResultTable = memo(({searchResults, paragraphUrl, setIsOpenSearchContainer}) => {
     const tableRows = searchResults.map(searchResult=>(
-        <SearchResultTableRow match={searchResult} />))
+        <SearchResultTableRow match={searchResult} setIsOpenSearchContainer={setIsOpenSearchContainer} />))
     return (<table className='border-separate'>
         <thead><td>match</td><td>location</td><td>Go</td></thead>
         <tbody className={'text-sm'}>{tableRows}</tbody>
@@ -77,7 +81,7 @@ function* genParagraphs(sw) {
     }
 }
 
-const SearchContainer = ({structuredWork, paragraphUrl}) => {
+const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer}) => {
     const [searchQuery, setSearchQuery] = useState('')
     const [prevParagraphUrl, setPrevParagraphUrl] = useState()
     const searchInputRef = useRef(null)
@@ -132,7 +136,7 @@ const SearchContainer = ({structuredWork, paragraphUrl}) => {
                 onChange={handleQueryChange} ref={searchInputRef} autoFocus />
             <button className='border bg-sky-500 hover:bg-sky-700'> Search</button>
         </form>
-        <SearchResultTable searchResults={searchResults} paragraphUrl={paragraphUrl}/>
+        <SearchResultTable searchResults={searchResults} paragraphUrl={paragraphUrl} setIsOpenSearchContainer={setIsOpenSearchContainer}/>
     </>)
 }
 
@@ -602,7 +606,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             <div className={`w-screen md:w-full pl-4 pr-4 flex flex-row justify-center justify-between`}>
 
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
-                <div className='flex-shrink flex flex-row flex-shrink justify-center'>
+                <div className='flex-row flex-shrink justify-center'>
                     {!isMinimized && <button className='border-1 p-1 rounded-sm border-gray-300/0 hover:border-gray-300/50'
                         onClick={handleClickOpenSearchContainer}>
                         { !isOpenSearchContainer ? svgMagnifyingGlass : 'Back' }
@@ -634,9 +638,15 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             </div>
 
             {/* ========== SEARCH RESULTS ==========*/}
-            <div className={isOpenSearchContainer ? 'flex flex-col flex-shrink align-center overflow-scroll relative' : 'hidden'}>
+            <div className={isOpenSearchContainer ? 'grow flex flex-col align-center overflow-scroll relative' : 'hidden'}>
                 <SetLocationContext value={{setLocation}}>
-                    <SearchContainer paragraphUrl={paragraphUrl} structuredWork={structuredWork}/>
+                    { !paragraphUrl
+                        ? null
+                        : ( <SearchContainer
+                            paragraphUrl={paragraphUrl}
+                            structuredWork={structuredWork}
+                            setIsOpenSearchContainer={setIsOpenSearchContainer}
+                            /> ) }
                 </SetLocationContext>
             </div>
 
