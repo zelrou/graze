@@ -64,7 +64,7 @@ const SearchResultTable = memo(({searchResults, paragraphUrl, setIsOpenSearchCon
     const tableRows = searchResults.map(searchResult=>(
         <SearchResultTableRow match={searchResult} setIsOpenSearchContainer={setIsOpenSearchContainer} />))
     return (<table className='border-separate'>
-        <thead><td>match</td><td>location</td><td>Go</td></thead>
+        <thead><td></td><td></td><td></td></thead>
         <tbody className={'text-sm'}>{tableRows}</tbody>
     </table>)
 })
@@ -91,12 +91,18 @@ const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer
         if (searchInputRef.current) searchInputRef.current.value = ''
     }
     const contextLen = 40;
-    let prevQ = ''
     const searchResults = useMemo(() => {
         const q = searchQuery
-        if (prevQ == q) return [];
-        const rQ = new RegExp(q, 'gid')
         const res = []
+
+        if (!q) return [];
+        let rQ;
+        try {
+            rQ = new RegExp(q, 'gid')
+        } catch (e) {
+            console.error(e);
+            return res;
+        }
         console.log('starting search', paragraphUrl, rQ);
         for (let paragraph of genParagraphs(structuredWork)) {
             //console.log(paragraph)
