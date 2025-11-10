@@ -604,7 +604,6 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             `font-sans text-lg text-zinc-300
             sm:border-2 border-gray-300/50
             rounded-sm bg-zinc-900 relative align-start justify-center`,
-            isMinimized ? '' : 'lg:pt-4',
             isMinimized ? 'w-fit' : 'w-screen lg:w-[90vw]',
             isMinimized ? 'h-full' : 'h-screen lg:h-[90vh] ',
             isMinimized ? 'place-self-start' : 'place-self-center'
@@ -688,7 +687,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
 
                 {/* ========= MAIN TEXT ========== */}
                 <div id="graze-main-text"
-                    className={`relative flex flex-row md:h-8/10 h-7/10
+                    className={`relative flex flex-row h-7/10
                     shrink-0 grow-0 bg-zinc-800 ${isMinimized ? 'hidden' : ''}
                     w-screen md:w-full
                     justify-between align-center`}
