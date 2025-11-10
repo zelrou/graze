@@ -69,12 +69,22 @@ const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) =
             ? latestMarks[t.url].cIdx
             : 0
         return (
-            <tr key={t.id} className={readerUrl === t.url ? 'bg-emerald-300/40' : ''}>
-                <td className='border-b p-2 border-gray-300 font-sans'>{t.title}</td>
+            <tr key={t.id}
+                className={[
+                    ((readerUrl === t.url) ? 'bg-emerald-300/40' : ''),
+                    (t.discarded ? 'opacity-30' : '')
+                    ].join(' ')}>
+                <td className='border-b p-2 border-gray-300 font-sans'>
+                    <div className='flex flex-row items-center'>
+                        { !t.favIconUrl ? null : <img
+                            className='w-[16px] h-[16px] mr-1'
+                            src={t.favIconUrl}/> }
+                        <span>{ t.title ? t.title : t.url}</span>
+                    </div></td>
                 {/*<td className='border-b p-2 border-gray-300 font-sans'>{t.url}</td>*/}
                 <td className='border-b p-2 border-gray-300 text-right font-mono'>{sIdx}.{pIdx}.{cIdx}</td>
                 <td className='border-b p-2 border-gray-300 text-center'>
-                    <button className='hover:bg-emerald-500/50 p-1'
+                    <button disabled={t.discarded ? true : false } className='hover:bg-emerald-500/50 p-1'
                         onClick={() => readerUrl === t.url ? setIsMinimized(false) : sendMessageToTab(t.id)}>
                         {(readerUrl !== t.url) ? svgArrowRightCircle : svgWindow }</button></td>
             </tr>) })
@@ -147,7 +157,7 @@ const ModalContainer = ({...props}) => {
 }
 
 
-const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
+export const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
     const modalRef = useContext(ModalContext)
     return (<div className={`p-4 space-y-4 flex flex-col items-center `}>
         <h2 className='text-center text-lg'>Welcome!</h2>

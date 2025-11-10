@@ -552,9 +552,11 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     }
 
     /* ========== TOOLBAR BOTTOM RESPONSIVE MINIMIZE/MAXIMIZE ========== */
+    /* TODO USE CSS CLASS FOR BREAKPOINT INSTEAD OF window.innerWidth */
     const toolbarBottomRef = useRef(null)
-    const defaultToolbarBottomState = window.screen.width < 641;
+    const defaultToolbarBottomState = window.innerWidth < 641;
     const [toolbarBottomIsMinimized, setToolbarBottomIsMinimized] = useState(defaultToolbarBottomState)
+
     const minimizeToolbarBottom = () => {
         toolbarBottomRef.current.style= ''
         setToolbarBottomIsMinimized(true)
@@ -599,18 +601,18 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
             }>
         {/* ========== READER MODAL ROOT ========== */}
         <div id='reader-modal-root' className={ ['z-50 flex flex-col',
-            `pt-1 font-sans text-lg text-zinc-300
+            `font-sans text-lg text-zinc-300
             sm:border-2 border-gray-300/50
             rounded-sm bg-zinc-900 relative align-start justify-center`,
-            isMinimized ? '' : 'md:pt-4',
-            isMinimized ? 'w-fit' : 'sm:w-screen lg:w-7/10',
-            isMinimized ? 'h-full' : 'h-screen sm:h-screen lg:h-[70vh] ',
+            isMinimized ? '' : 'lg:pt-4',
+            isMinimized ? 'w-fit' : 'w-screen lg:w-[90vw]',
+            isMinimized ? 'h-full' : 'h-screen lg:h-[90vh] ',
             isMinimized ? 'place-self-start' : 'place-self-center'
             ].join(' ') }>
 
 
             {/* ========== TOOLBAR TOP ========== */}
-            <div className={`w-screen md:w-full pl-4 pr-4 flex flex-row justify-center justify-between`}>
+            <div className={`w-screen md:w-full p-2 lg:p-4 flex flex-row justify-center justify-between`}>
 
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
                 <div className='flex-row flex-shrink justify-center'>
