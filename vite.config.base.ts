@@ -28,14 +28,15 @@ export const baseManifest = {
 
 export const baseBuildOptions: BuildOptions = {
   sourcemap: isDev,
-  emptyOutDir: !isDev,
+  emptyOutDir: true,
   rollupOptions: {
-    input: {app:resolve("./src/pages/", "main", "index.html")},
+    input: {"main":resolve("src/pages/", "main", "index.html")},
     output: {entryFileNames: (chunk)=>`src/pages/${chunk.name}/index.js`}
   }
 }
 
 export default defineConfig({
+  publicDir: resolve(__dirname, 'public'),
   plugins: [
     tailwindcss(),
     tsconfigPaths(),
@@ -43,7 +44,6 @@ export default defineConfig({
     stripDevIcons(isDev),
     crxI18n({ localize, src: './src/locales' }),
   ],
-  publicDir: resolve(__dirname, 'public'),
   test: {
     browser: {
       enabled: true,

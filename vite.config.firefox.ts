@@ -26,6 +26,5 @@ export default mergeConfig(
       ...baseBuildOptions,
       outDir
     },
-    publicDir: resolve(__dirname, 'public'),
   })
 )
