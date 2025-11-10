@@ -51,7 +51,7 @@ const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
         <td className='border-b p-2 pl-8 border-gray-300'>{match[3]}</td>
         <td className='border-b p-2 pl-8 border-gray-300 text-right'>{locString}</td>
         <td className='border-b border-gray-300'>
-            <button className='cursor-pointer w-full h-full hover:bg-lime-500/50'
+            <button className='cursor-pointer w-full h-full hover:bg-emerald-500/50'
                 onClick={()=>{
                     setLocation(sIdx, pIdx, cIdx)
                     setIsOpenSearchContainer(false)
