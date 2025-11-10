@@ -50,8 +50,8 @@ const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
     return (<tr>
         <td className='border-b p-2 pl-8 border-gray-300'>{match[3]}</td>
         <td className='border-b p-2 pl-8 border-gray-300 text-right'>{locString}</td>
-        <td className='border-b p-2 pl-8 border-gray-300'>
-            <button
+        <td className='border-b border-gray-300'>
+            <button className='cursor-pointer w-full h-full hover:bg-lime-500/50'
                 onClick={()=>{
                     setLocation(sIdx, pIdx, cIdx)
                     setIsOpenSearchContainer(false)
@@ -136,11 +136,11 @@ const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer
 
     console.log(searchResults)
     return(<>
-        <form method='post' onSubmit={handleSubmitSearch}>
+        <form className='ml-4 p-1 flex flex-row space-x-2' method='post' onSubmit={handleSubmitSearch}>
             <input name='query' type='text' minLength={4} maxLength={20}
-                className='bg-[#4f7777fc] focus:outline-2'
+                className='bg-zinc-700 pl-1 font-sans focus:outline-2'
                 onChange={handleQueryChange} ref={searchInputRef} autoFocus />
-            <button className='border bg-sky-500 hover:bg-sky-700'> Search</button>
+            <button className='cursor-pointer border-2 border-zinc-700 px-3 py-1 hover:border-zinc-400'> Search</button>
         </form>
         <SearchResultTable searchResults={searchResults} paragraphUrl={paragraphUrl} setIsOpenSearchContainer={setIsOpenSearchContainer}/>
     </>)
