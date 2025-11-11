@@ -6,6 +6,7 @@ import {
 import { useTabStore } from './hooks/useTabStore';
 import { toastStore } from './ToastStore';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { LocalStorageContext } from './contexts';
 import ToolbarTop from './components/ToolbarTop';
 import Reader from '@pages/main/Reader';
 import ClosedTabsTable from './components/ClosedTabsTable';
@@ -59,33 +60,33 @@ export default function App() {
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
     return (<div className={`relative w-screen min-h-screen h-full flex
         flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
+        <LocalStorageContext value={{localStorage, setLocalStorage}}>
+            <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage}/>
 
-        <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage}/>
+            <h2 className='text-lg text-semibold'>Open Tabs</h2>
+            <OpenTabsTable
+                structuredWork={structuredWork}
+                tabs={tabs}
+                readerUrl={readerUrl}
+                setReaderUrl={setReaderUrl}
+                localStorage={localStorage}
+                setIsMinimized={setIsMinimized} />
 
-        <h2 className='text-lg text-semibold'>Open Tabs</h2>
-        <OpenTabsTable
-            structuredWork={structuredWork}
-            tabs={tabs}
-            readerUrl={readerUrl}
-            setReaderUrl={setReaderUrl}
-            localStorage={localStorage}
-            setIsMinimized={setIsMinimized} />
+            <h2 className='text-lg text-semibold'>Previous Tabs</h2>
+            <ClosedTabsTable tabs={tabs} localStorage={localStorage} />
 
-        <h2 className='text-lg text-semibold'>Previous Tabs</h2>
-        <ClosedTabsTable tabs={tabs} localStorage={localStorage} />
-
-        { (!(readerUrl && structuredWork) ? null : (
-        <Reader
-            localStorage={localStorage[readerUrl] || defaultCursor}
-            paragraphUrl={ readerUrl }
-            structuredWork={ structuredWork.current }
-            setLocalStorage={ setLocalStorage }
-            isPaused={isPaused} togglePaused={togglePaused}
-            handleClickMinimize={handleClickMinimize}
-            isMinimized={isMinimized}
-            setIsMinimized={setIsMinimized}
-            addToast={toastStore.addToast}
-        />)) }
+            { (!(readerUrl && structuredWork) ? null : (
+            <Reader
+                localStorage={localStorage[readerUrl] || defaultCursor}
+                paragraphUrl={ readerUrl }
+                structuredWork={ structuredWork.current }
+                isPaused={isPaused} togglePaused={togglePaused}
+                handleClickMinimize={handleClickMinimize}
+                isMinimized={isMinimized}
+                setIsMinimized={setIsMinimized}
+                addToast={toastStore.addToast}
+            />)) }
+        </LocalStorageContext>
     </div>)
 }
 

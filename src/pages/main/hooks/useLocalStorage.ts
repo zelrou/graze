@@ -1,13 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useReducer } from "react";
 import { isInDenylist } from "./useTabStore";
+import { localStorageReducer } from "../reducers";
 
 const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
 
 export function useLocalStorage () {
+
+    const [localStorage, localStorageDispatch] = useReducer(localStorageReducer, {})
     /* TODO
      * useRef for stateLocalStore
      * and sorted stringified array for actual state? */
-    const [stateLocalStorage, setStateLocalStorage] = useState({});
     const [isStorageInitialized, setIsStorageInitialized] = useState(false)
     console.log('LOAD LOCAL STORAGE')
     useEffect(()=>{
@@ -20,16 +22,9 @@ export function useLocalStorage () {
                 console.log(`${item} has changed:`);
                 console.log("Old, New  ", oldValue, newValue);
                 if (newValue) {
-                    setStateLocalStorage(state => ({
-                        ...state,
-                        [item]: newValue
-                    }))
+                    localStorageDispatch({type:'set', key: item, value: newValue})
                 } else {
-                    setStateLocalStorage(state => {
-                        const oldEntries = Object.entries(state)
-                        return Object.fromEntries(oldEntries
-                            .filter(([k,_]) => (k !== item)))
-                    })
+                    localStorageDispatch({type: 'remove', key: item})
                 }
             }
         }
@@ -43,12 +38,12 @@ export function useLocalStorage () {
     }, [])
 
     const setLocalStorage = useCallback( async (x, v=null) => {
-        console.log('setLocalStorage', x, v, stateLocalStorage);
+        console.log('setLocalStorage', x, v, localStorage);
         let res;
         if (v) {
             let shouldPersist = false
-            if (stateLocalStorage.hasOwnProperty(x)) {
-                const stateV = stateLocalStorage[x]
+            if (localStorage.hasOwnProperty(x)) {
+                const stateV = localStorage[x]
                 for (let [argKey, argVal] of Object.entries(v)) {
                     if (stateV.hasOwnProperty(argKey)) {
                         if (argVal !== stateV[argKey]) { // persist bc val
@@ -78,12 +73,12 @@ export function useLocalStorage () {
         }
 
         return res
-    },[setStateLocalStorage, stateLocalStorage])
+    },[localStorage])
 
 
     useEffect(async () => {
             const res = await browser.storage.local.get()
-            setStateLocalStorage(res);
+            localStorageDispatch({type:'set_all', payload: res});
     }, [])
 
 
@@ -121,6 +116,6 @@ export function useLocalStorage () {
 
 
 
-    console.log('end:useLocalStorage', stateLocalStorage);
-    return [stateLocalStorage, setLocalStorage];
+    console.log('end:useLocalStorage', localStorage);
+    return [localStorage, setLocalStorage];
 }

@@ -2,6 +2,7 @@ import {
     useState, useEffect, useEffectEvent, createContext, useContext,
     memo, useMemo, useRef, useCallback
 } from 'react';
+import { LocalStorageContext } from './contexts';
 
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
@@ -274,9 +275,10 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
     </form></div>)
 }
 
-export default function Reader({paragraphUrl, structuredWork, localStorage, setLocalStorage,
+export default function Reader({paragraphUrl, structuredWork, localStorage,
     handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused,
     addToast}) {
+    const { setLocalStorage } = useContext(LocalStorageContext)
     console.log('================= Reader ===================')
     const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
