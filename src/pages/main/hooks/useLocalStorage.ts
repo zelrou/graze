@@ -1,54 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { isInDenylist } from "./useTabStore";
 
 const defaultStorageValue = {sIdx:0, pIdx: 0, cIdx: 0}
 
-export const useLocalStorage = () => {
+export function useLocalStorage () {
     /* TODO
      * useRef for stateLocalStore
      * and sorted stringified array for actual state? */
     const [stateLocalStorage, setStateLocalStorage] = useState({});
     const [isStorageInitialized, setIsStorageInitialized] = useState(false)
-
-    const setLocalStorage =  useCallback(async (x, v=null) => {
-        console.log('setLocalStorage', x, v);
-        let res;
-        if (v) {
-            let shouldPersist = false
-            if (stateLocalStorage.hasOwnProperty(x)) {
-                const stateV = stateLocalStorage[x]
-                for (let [argKey, argVal] of Object.entries(v)) {
-                    if (stateV.hasOwnProperty(argKey)) {
-                        if (argVal !== stateV[argKey]) { // persist bc val
-                            shouldPersist = true;
-                        }
-                    } else { // persist bc key
-                        shouldPersist = true;
-                    }
-                }
-            } else { //persist bc top level key does not exit
-                shouldPersist = true
-            }
-            if (shouldPersist) {
-                res = await browser.storage.local.set({ [x]: v })
-            } else {
-                console.log('no changes to persist')
-                res = Promise.resolve(true)
-            }
-        }
-        else {
-            res = await browser.storage.local.set(x)
-        }
-        return res
-    }, [stateLocalStorage])
-
-
-    useEffect(async () => {
-        const res = await browser.storage.local.get()
-        setStateLocalStorage(res);
-    }, [setStateLocalStorage])
-
+    console.log('LOAD LOCAL STORAGE')
     useEffect(()=>{
+        console.log('======STORAGE:::resetting listener')
         const handleStorageChange = (changes, area) => {
             console.log(`Change in storage area: ${area}`);
             const changedItems = Object.keys(changes);
@@ -72,10 +35,58 @@ export const useLocalStorage = () => {
         }
 
         browser.storage.onChanged.addListener(handleStorageChange);
+
         return () => {
+            console.log("========STORAGE::: removing listener")
             browser.storage.onChanged.removeListener(handleStorageChange)
         }
-    }, [setStateLocalStorage])
+    }, [])
+
+    const setLocalStorage = useCallback( async (x, v=null) => {
+        console.log('setLocalStorage', x, v, stateLocalStorage);
+        let res;
+        if (v) {
+            let shouldPersist = false
+            if (stateLocalStorage.hasOwnProperty(x)) {
+                const stateV = stateLocalStorage[x]
+                for (let [argKey, argVal] of Object.entries(v)) {
+                    if (stateV.hasOwnProperty(argKey)) {
+                        if (argVal !== stateV[argKey]) { // persist bc val
+                            shouldPersist = true;
+                        }
+                    } else { // persist bc key
+                        shouldPersist = true;
+                    }
+                }
+            } else { //persist bc top level key does not exit
+                shouldPersist = true
+            }
+            console.log('shouldPersist', shouldPersist)
+            if (shouldPersist) {
+                res = await browser.storage.local.set({ [x]: v })
+                console.log('STORAGE RES:', res)
+                //setStateLocalStorage(s=>({...s, [x]:v}))
+            } else {
+                console.log('no changes to persist')
+                res = Promise.resolve(true)
+            }
+        }
+        else {
+            res = await browser.storage.local.set(x)
+            console.log('STORAGE RES2:', res)
+            //setStateLocalStorage(s=>({ ...s, ...x}))
+        }
+
+        return res
+    },[setStateLocalStorage, stateLocalStorage])
+
+
+    useEffect(async () => {
+            const res = await browser.storage.local.get()
+            setStateLocalStorage(res);
+    }, [])
+
+
 
     const normalizeStorage = useCallback(async (keys=[]) => {
         const normalized = []
@@ -110,6 +121,6 @@ export const useLocalStorage = () => {
 
 
 
-    console.log('end:useLocalStorage')//, stateLocalStorage);
+    console.log('end:useLocalStorage', stateLocalStorage);
     return [stateLocalStorage, setLocalStorage];
 }

@@ -1,20 +1,16 @@
 import {
     useState, useEffect, useRef, useReducer, createContext, useContext,
-    useEffectEvent, useSyncExternalStore
+    useEffectEvent, useSyncExternalStore, useCallback
 } from 'react';
 
-import { useLocalStorage } from './hooks/useLocalStorage';
 import { isInDenylist, useTabStore } from './hooks/useTabStore';
-import { encodeUnicode, decodeUnicode } from './encodeUtils';
-import Reader from '@pages/main/Reader';
 import { toastStore } from './ToastStore';
-import logo from '@assets/img/logo.svg';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import ToolbarTop from './components/ToolbarTop';
+import Reader from '@pages/main/Reader';
 
 const svgArrowRightCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-</svg>)
-const svgClipboard = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5A3.375 3.375 0 0 0 6.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0 0 15 2.25h-1.5a2.251 2.251 0 0 0-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 0 0-9-9Z" />
 </svg>)
 const svgWindow = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.25V18a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 21 18V8.25m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v2.25m-18 0h18M5.25 6h.008v.008H5.25V6ZM7.5 6h.008v.008H7.5V6Zm2.25 0h.008v.008H9.75V6Z" />
@@ -25,16 +21,6 @@ const svgArrowTopRightOnSquare = (<svg xmlns="http://www.w3.org/2000/svg" fill="
 const svgXMark = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
 </svg>)
-const svgTrash = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-</svg>)
-const svgQuestionMarkCircle = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-</svg>)
-
-
-
-
 
 /* ========== OPEN TAB LIST ========== */
 const defaultStructuredWork = {
@@ -43,8 +29,8 @@ const defaultStructuredWork = {
     parts: [{ heading:'', paragraphs:[''] }]
 }
 let structuredWork = defaultStructuredWork;
-const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) => {
-    const sendMessageToTab = async tabId => {
+const UrlList = ({tabs, readerUrl, setReaderUrl, localStorage, setIsMinimized}) => {
+    const sendMessageToTab = useCallback(async tabId => {
         const tabResponse = await browser.tabs.sendMessage(tabId,
             { greeting: "Hi from background script" })
         console.log("Message from the content script:");
@@ -53,20 +39,20 @@ const UrlList = ({tabs, readerUrl, setReaderUrl, latestMarks, setIsMinimized}) =
         structuredWork = tabResponse.structuredWork
         const targetTab = tabs.filter(t => t.id === tabId)[0]
         setReaderUrl(targetTab.url)
-    }
+    },[tabs, setReaderUrl])
     //console.log('urlList latestMarks:', latestMarks)
     return !tabs.length ? null : tabs.map(t => {
-        const sIdx = (latestMarks.hasOwnProperty(t.url)
-            && latestMarks[t.url].hasOwnProperty('sIdx'))
-            ? latestMarks[t.url].sIdx
+        const sIdx = (localStorage.hasOwnProperty(t.url)
+            && localStorage[t.url].hasOwnProperty('sIdx'))
+            ? localStorage[t.url].sIdx
             : 0
-        const pIdx = (latestMarks.hasOwnProperty(t.url)
-            && latestMarks[t.url].hasOwnProperty('pIdx'))
-            ? latestMarks[t.url].pIdx
+        const pIdx = (localStorage.hasOwnProperty(t.url)
+            && localStorage[t.url].hasOwnProperty('pIdx'))
+            ? localStorage[t.url].pIdx
             : 0
-        const cIdx = (latestMarks.hasOwnProperty(t.url)
-            && latestMarks[t.url].hasOwnProperty('cIdx'))
-            ? latestMarks[t.url].cIdx
+        const cIdx = (localStorage.hasOwnProperty(t.url)
+            && localStorage[t.url].hasOwnProperty('cIdx'))
+            ? localStorage[t.url].cIdx
             : 0
         return (
             <tr key={t.id}
@@ -128,83 +114,15 @@ const PrevUrlList = ({tabs, latestMarks}) => {
             </tr>) })
 }
 
-
-async function setClipboard(text="<3") {
-  const type = "text/plain";
-  const clipboardItemData = {
-    [type]: text,
-  };
-  const clipboardItem = new ClipboardItem(clipboardItemData);
-  await navigator.clipboard.write([clipboardItem]);
-}
-
-const ModalContext = createContext(null)
-const ModalContainer = ({...props}) => {
-    /* TODO pass all props to dialog and props.modalContext to ModalContext? */
-    const {children, modalRef, onClose, className} = props;
-    const defaultClass = `backdrop:bg-black/60 place-self-center bg-zinc-100 text-black sm:border-salmon-500 sm:border-4`
-    const classStr = `${defaultClass} ${className}`
-    return (
-        <ModalContext value={modalRef}>
-            <dialog
-                className={classStr}
-                ref={modalRef}
-                onClose={onClose}>
-                {children}
-            </dialog>
-        </ModalContext>
-    )
-}
-
-
-export const WelcomeModal = ({setLocalStorage, setShowHelp}) => {
-    const modalRef = useContext(ModalContext)
-    return (<div className={`p-4 space-y-4 flex flex-col items-center `}>
-        <h2 className='text-center text-lg'>Welcome!</h2>
-        <div className='text-md'>
-            <p className='my-3'>
-                In another tab, open a page you want to read (e.g. a&nbsp;
-                <a className='underline' target="_blank" href="https://en.wikipedia.org/wiki/Special:Random">random wikipedia article</a>).
-                <br />
-                You'll see the page in your Open Tabs list.
-                <br />
-                Click the arrow to the right of the corresponding tab to enter the Reader Mode.
-            </p>
-            <p className='my-3'>From there you can ...</p>
-            <ul className='ml-5 mt-2 list-disc'>
-                <li>Click the arrows on the left and right to seek forward and back in the text</li>
-                <li>Use the arrow keys to seek</li>
-                <li>Click the play button at the bottom to auto-seek</li>
-            </ul>
-            <p className='my-3'>As you seek, you'll see your progress and location update</p>
-            <p className='my-3'>Click Mark Progress so you can come back to that position</p>
-        </div>
-        <div className='flex flex-row space-x-4 text-sm'>
-            <button
-                onClick={ async() => {
-                    await setLocalStorage('graze', {'setup': false})
-                    setShowHelp(false)
-                    modalRef.current.close()
-                }}
-                className='border-1 border-gray-300 p-1'>dont show this again</button>
-            <button autoFocus
-                onClick={()=>{
-                    setShowHelp(false)
-                    modalRef.current.close()
-                }}
-                className='border-1 border-gray-300 p-1'>dismiss</button>
-        </div>
-    </div>)
-}
-
-
 /* ========== APP ========== */
-export default function App ({}) {
-    console.log('App didMount')
+export default function App() {
+    console.log('=================== App didMount ===================')
+    /* HOOKS */
+    console.log('App preTabStore')
     const tabs = useTabStore();
     console.log('App prelocalStorage')
-    const [localStorage, setLocalStorage] = useLocalStorage();
-    console.log('App preReaderUrl')
+    const [localStorage, setLocalStorage] = useLocalStorage()
+    /* STATE */
     const [readerUrl, setReaderUrl] = useState('');
     const [isMinimized, setIsMinimized] = useState(true);
     const [isPaused, togglePaused] = useState(true)
@@ -222,25 +140,6 @@ export default function App ({}) {
         }
     }, [msg, toasts])
 
-    /* ========== WELCOME / HELP MODAL REF ========== */
-    const modalRef = useRef(null)
-    const isSetup = (localStorage.hasOwnProperty('graze')
-        && localStorage['graze'].setup)
-    const [showHelp, setShowHelp] = useState(false)
-    const handleClickHelp = () => {
-        setShowHelp(true)
-    };
-    console.log('WELCOME setup,help', isSetup,showHelp)
-    useEffect(()=>{
-        if (isSetup) setShowHelp(true);
-    }, [isSetup, setShowHelp])
-    if (modalRef.current && ((isSetup&&showHelp) || (showHelp&&!isSetup))) {
-        modalRef.current.showModal();
-    }
-    const onCloseWelcomeModal=()=> {
-        if (showHelp) setShowHelp(false)
-    }
-
     /* ========== WINDOW MINIMIZE/MAXIMIZE ========== */
     const handleClickMinimize = () => {
         console.log('handleClickMinimize', isMinimized)
@@ -251,194 +150,13 @@ export default function App ({}) {
         }
     };
 
-    /* ========== TOOLBAR: CLEAR STORAGE ==========  */
-    const clearAllStorageRef = useRef(null)
-    const clearAllStorageTooltipRef = useRef(null)
-
-    const handleClickClearAllStorage = async (e) => {
-        e.preventDefault()
-        console.log('handleClickClearAllStorage')
-        for (const key of Object.keys(localStorage)) {
-            browser.storage.local.remove(key)
-        }
-        if (clearAllStorageRef.current) {
-            clearAllStorageRef.current.hidePopover()
-        }
-        setMsg('Storage cleared!')
-        return null
-    }
-
-
-    /* ========== TOOLBAR: EXPORT STORAGE ==========  */
-    const exportStorageTooltipRef = useRef(null)
-    const handleClickExport = (e) => {
-        e.preventDefault()
-        const uniStr = JSON.stringify(localStorage)
-        const encoded = encodeUnicode(uniStr)
-        console.log(encoded)
-        setClipboard(encoded)
-        setMsg('Copied data to clipboard.')
-    }
-
-
-    /* ========== TOOLBAR & MODAL: IMPORT STORAGE ==========*/
-    const importModalRef = useRef(null)
-    const inputTextAreaImportModalRef = useRef(null)
-    const handleClickOpenImportModal = (e) => {
-        e.preventDefault()
-        importModalRef.current.showModal()
-    }
-    const handleClickSubmitImportModal = (e) => {
-        e.preventDefault()
-        const res = inputTextAreaImportModalRef.current.value;
-        importModalRef.current.close(res)
-    }
-    /* https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog#handling_the_return_value_from_the_dialog */
-    const onCloseImportModal = async (e) => {
-        inputTextAreaImportModalRef.current.value = ''
-        const { returnValue } = importModalRef.current
-
-        if ((!returnValue) || (returnValue.length < 4)) {
-            setMsg(`Import Canceled`)
-            return null
-        }
-
-        let decodedStr;
-        try {
-            decodedStr = decodeUnicode(returnValue)
-        } catch(e) {
-            console.log(e)
-            decodedStr = null
-        }
-
-        if (!decodedStr) {
-            setMsg(`Import failure: invalid import string.`)
-            return null
-        }
-
-        let decoded;
-        try {
-            decoded = JSON.parse(decodedStr)
-        } catch(e){
-            console.log(e)
-            setMsg(`Import failure: failed to parse import string.`)
-            return null
-        }
-
-        let result = null
-        try {
-            console.log(decoded)
-            await setLocalStorage(decoded)
-            result = 'success'
-        } catch(e) {
-            console.log(e)
-            result = 'failure'
-        }
-
-        switch(result) {
-            case 'failure': {
-                setMsg(`Import failure: error storing data.`)
-                return null
-             }
-            case 'success': {
-                setMsg(`Successfully imported data!`)
-                console.log('success imported', decoded)
-                return null
-            }
-            default: {
-                setMsg('Import failure: unexpected error.')
-                return null
-            }
-        }
-    }
-
-
     /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
 
     return (<div className={`relative w-screen min-h-screen h-full flex
         flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
 
-        {/* ========== MODALS ========== */}
-        <ModalContainer modalRef={modalRef} onClose={onCloseWelcomeModal}>
-            <WelcomeModal setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
-        </ModalContainer>
-        <ModalContainer modalRef={importModalRef} onClose={onCloseImportModal}>
-           <form method='dialog' className='min-w-[25vw] min-h-[20vw] p-4 flex flex-col space-y-4 justify-between items-center'>
-                <h4 className=''>Import</h4>
-                <label className='grow flex flex-col w-8/10' for='importStorageInput'>
-                    Paste exported settings here:
-                    <textarea
-                        className='border-gray-300 border mx-1 w-full grow'
-                        required
-                        minLength={4}
-                        ref={inputTextAreaImportModalRef}
-                        name='importStorageInput'></textarea>
-                </label>
-                <div className='flex flex-row space-x-4'>
-                    <button type='submit' className='border-1 border-gray-300 p-1'
-                        onClick={handleClickSubmitImportModal}>
-                        confirm</button>
-                    <button type='button' className='border-1 border-gray-300 p-1'
-                        onClick={()=>importModalRef.current.close()}
-                        autoFocus>
-                        cancel</button>
-                </div>
-            </form>
-        </ModalContainer>
-
-        {/* ========== APP CONTAINER ========== */}
-        <div className='flex flex-col w-screen bg-zinc-800'>
-            {/* ========== TOP TOOLBAR ========== */}
-            <div id='app-toolbar-top' className='grid grid-rows-1 grid-cols-3 border-gray-300/50 border-b-4 px-4'>
-                {/* LEFT (col-1/3 */}
-                <img className='col-span-1 h-10 m-1' src={logo} alt='logo' />
-                {/* RIGHT (col-start-3/3) */}
-                <div className={`relative col-start-3 col-span-1 justify-self-end
-                    flex flex-row space-x-4 justify-between text-center text-sm`}>
-                    <button onClick={handleClickHelp}>
-                        {svgQuestionMarkCircle}</button>
-                    <button popoverTarget='confirmClearAllStorage'
-                        className='basis-xs text-mono'
-                        onMouseOver={(e)=>clearAllStorageTooltipRef.current.showPopover()}
-                        onMouseOut={(e)=>clearAllStorageTooltipRef.current.hidePopover()}
-                        onFocus={(e)=>clearAllStorageTooltipRef.current.showPopover()}
-                        onBlur={(e)=>clearAllStorageTooltipRef.current.hidePopover()}>
-                        {svgTrash}
-                        <div ref={clearAllStorageTooltipRef} id="tooltip-app-cas"
-                            className="tooltip" popover="hint">Clear All Storage</div>
-                    </button>
-                    <div popover="auto" id='confirmClearAllStorage'
-                        ref={clearAllStorageRef}
-                        className={`open:absolute open:grid opacity-0 open:opacity-90`}>
-                        <div className='place-self-center'>
-                            <h3 className='text-lg'>Clear All Storage?</h3>
-                            <button className='border p-3 mx-2'
-                                onClick={(e)=>handleClickClearAllStorage(e)}>
-                                confirm</button>
-                            <button className='border p-3 mx-2'
-                                popoverTarget='confirmClearAllStorage'>
-                                cancel</button>
-                        </div>
-                    </div>
-                    <button className='basis-xs text-mono'
-                        onClick={handleClickExport}
-                        onMouseOver={(e)=>exportStorageTooltipRef.current.showPopover()}
-                        onMouseOut={(e)=>exportStorageTooltipRef.current.hidePopover()}
-                        onFocus={(e)=>exportStorageTooltipRef.current.showPopover()}
-                        onBlur={(e)=>exportStorageTooltipRef.current.hidePopover()}>
-                        {svgClipboard}
-                        <div popover='hint' className='tooltip' ref={exportStorageTooltipRef}>
-                            Export Storage to Clipboard</div>
-                    </button>
-                    <button className='basis-xs text-mono'
-                        onClick={handleClickOpenImportModal}>
-                        import
-                    </button>
-                    <a className='basis-xs self-center' href='github.com'>github</a>
-                </div>
-            </div>
-        </div>
+        <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage}/>
 
         <h2 className='text-lg text-semibold'>Open Tabs</h2>
         <div className='w-screen md:w-7/10 overflow-auto'>
@@ -454,7 +172,7 @@ export default function App ({}) {
                         tabs={ tabs }
                         readerUrl={ readerUrl }
                         setReaderUrl={ setReaderUrl }
-                        latestMarks={ localStorage }
+                        localStorage={ localStorage }
                         setIsMinimized={setIsMinimized} />
                 </tbody>
             </table>
@@ -472,7 +190,9 @@ export default function App ({}) {
                 </tbody>
             </table>
         </div>
+        {(!(readerUrl && structuredWork) ? null : (
         <Reader
+            localStorage={localStorage[readerUrl] || {sIdx:0, pIdx:0,cIdx:0}}
             paragraphUrl={ readerUrl }
             structuredWork={ structuredWork || defaultStructuredWork }
             setLocalStorage={ setLocalStorage }
@@ -481,8 +201,9 @@ export default function App ({}) {
             isMinimized={isMinimized}
             setIsMinimized={setIsMinimized}
             addToast={toastStore.addToast}
-        />
+        />))}
     </div>)
 }
+
 
 

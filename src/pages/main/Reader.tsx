@@ -274,7 +274,7 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
     </form></div>)
 }
 
-export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
+export default function Reader({paragraphUrl, structuredWork, localStorage, setLocalStorage,
     handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused,
     addToast}) {
     console.log('================= Reader ===================')
@@ -282,7 +282,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     const [paragraphIndex, setParagraphIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
-    const defaultFontSize = (window.screen.width < 641) ? 1 : 1.5;
+    const defaultFontSize = (window.innerWidth < 641) ? 1 : 1.5;
     const [fontSize, setFontSize] = useState(defaultFontSize);
 
     const [delay, setDelay] = useState(DEFAULTS.DELAY);
@@ -505,7 +505,9 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     const setStorageBookmarkLatest = async () => {
         console.log('setStorageBookmarkLatest');
         const mark = { sIdx: partIndex, pIdx: paragraphIndex, cIdx: charIndex }
+        //browser.storage.local.set({ [paragraphUrl]: {...mark} })
         await setLocalStorage(paragraphUrl, {...mark})
+        console.log(localStorage)
         console.log('setStorageMarkOK');
         addToast(`set progress ${partIndex}.${paragraphIndex}.${charIndex}`)
     }
@@ -515,11 +517,10 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
         return setStorageBookmarkLatest();
     }
 
-    const handleClickGetBookmarkLatest = async (e) => {
+    const handleClickGetBookmarkLatest = (e) => {
         e.preventDefault();
         if (!isPaused) togglePaused(true);
-        let res = await browser.storage.local.get(paragraphUrl)
-        if (res) { res = res[paragraphUrl]; }
+        const res = localStorage;
         console.log('handleClickGetBookmarkLatest', res);
         if (res && (res.sIdx !== partIndex)) {
             setPartIndex(res.sIdx);
@@ -535,7 +536,7 @@ export default function Reader({paragraphUrl, structuredWork, setLocalStorage,
     const handleClickClearBookmarks = async (e) => {
         e.preventDefault()
         /* TODO add confirm dialog */
-        await browser.storage.local.set({
+        await setLocalStorage({
             [paragraphUrl]: { sIdx: 0, pIdx: 0, cIdx: 0 }
         })
         let {author, title} = structuredWork;
