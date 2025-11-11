@@ -108,7 +108,6 @@ export default function ToolbarTop ({localStorage, setLocalStorage, setMsg}) {
 
     /* ========== CLEAR STORAGE ==========  */
     const clearAllStorageRef = useRef(null)
-    const clearAllStorageTooltipRef = useRef(null)
 
     const handleClickClearAllStorage = async (e) => {
         e.preventDefault()
@@ -208,7 +207,11 @@ export default function ToolbarTop ({localStorage, setLocalStorage, setMsg}) {
 
     return (<>
         {/* ========== MODALS ========== */}
-        <WelcomeModal modalRef={welcomeModalRef} showHelp={showHelp} setShowHelp={setShowHelp} setLocalStorage={setLocalStorage} />
+        <WelcomeModal
+            modalRef={welcomeModalRef}
+            showHelp={showHelp}
+            setShowHelp={setShowHelp}
+            setLocalStorage={setLocalStorage} />
         <ModalContainer modalRef={importModalRef} onClose={onCloseImportModal}>
            <form method='dialog' className='min-w-[25vw] min-h-[20vw] p-4 flex flex-col space-y-4 justify-between items-center'>
                 <h4 className=''>Import</h4>
@@ -241,17 +244,16 @@ export default function ToolbarTop ({localStorage, setLocalStorage, setMsg}) {
                 {/* RIGHT (col-start-3/3) */}
                 <div className={`relative col-start-3 col-span-1 justify-self-end
                     flex flex-row space-x-4 justify-between text-center text-sm`}>
-                    <button onClick={handleClickHelp}>
-                        {svgQuestionMarkCircle}</button>
-                    <button popoverTarget='confirmClearAllStorage'
-                        onMouseOver={(e)=>clearAllStorageTooltipRef.current.showPopover()}
-                        onMouseOut={(e)=>clearAllStorageTooltipRef.current.hidePopover()}
-                        onFocus={(e)=>clearAllStorageTooltipRef.current.showPopover()}
-                        onBlur={(e)=>clearAllStorageTooltipRef.current.hidePopover()}>
-                        {svgTrash}
-                        <div ref={clearAllStorageTooltipRef} id="tooltip-app-cas"
-                            className="tooltip" popover="hint">Clear All Storage</div>
-                    </button>
+
+                    <ButtonWithPopover
+                        buttonProps={{onClick:handleClickHelp}}
+                        buttonChildren={svgQuestionMarkCircle}
+                        popoverChildren={`Help`} />
+
+                    <ButtonWithPopover
+                        buttonProps={{popoverTarget:'confirmClearAllStorage'}}
+                        buttonChildren={svgTrash}
+                        popoverChildren={`Clear All Storage`} />
                     <div popover="auto" id='confirmClearAllStorage'
                         ref={clearAllStorageRef}
                         className={`open:absolute open:grid opacity-0 open:opacity-90`}>
@@ -265,14 +267,17 @@ export default function ToolbarTop ({localStorage, setLocalStorage, setMsg}) {
                                 cancel</button>
                         </div>
                     </div>
+
                     <ButtonWithPopover
                         buttonProps={{onClick:handleClickExport}}
                         buttonChildren={svgClipboard}
-                        popoverChildren={`Export Storage to Clipboard`} />
-                    <button
-                        onClick={handleClickOpenImportModal}>
-                        {svgDocumentArrowDown}
-                    </button>
+                        popoverChildren={`Export Storage & Settings to Clipboard`} />
+
+                    <ButtonWithPopover
+                        buttonProps={{onClick:handleClickOpenImportModal}}
+                        buttonChildren={svgDocumentArrowDown}
+                        popoverChildren={`Import Storage & Settings`} />
+
                     <a className='basis-xs self-center' target='_blank'
                         href='https://github.com/zelrou/graze'>
                         {svgGithub}
