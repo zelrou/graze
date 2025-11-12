@@ -29,8 +29,8 @@ const onExecuted = (result) => {
 }
 
 
-const openTabIndex = () => {
-    browser.tabs.create({"url": "/src/pages/main/index.html"});
+export const openTabIndex = async () => {
+    return browser.tabs.create({"url": "/src/pages/main/index.html"});
 }
 
 // browser.action.onClicked.addListener((t) => {
@@ -90,3 +90,5 @@ const registerScripts = async (tab) => {
 
 
 
+
+window.openTabIndex = openTabIndex;
