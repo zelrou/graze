@@ -55,7 +55,8 @@ export default function App() {
             setIsMinimized(false);
         }
     };
-
+    const tabStatus = tabs.map(tab=> ({url:tab.url, status:tab.status}))
+    console.log(tabStatus)
     /* ========== RENDER ========== */
     console.log('App preRender:', localStorage)//, 'tabs', tabs,'readerUrl',readerUrl,'setReaderUrl', setReaderUrl,'stateLocalStorage', localStorage)
     return (<div className={`relative w-screen min-h-screen h-full flex
@@ -64,13 +65,13 @@ export default function App() {
             <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage}/>
 
             <h2 className='text-lg text-semibold'>Open Tabs</h2>
-            <OpenTabsTable
+            {tabs.every(tab=>tab.status==='complete') ? <OpenTabsTable
                 structuredWork={structuredWork}
                 tabs={tabs}
                 readerUrl={readerUrl}
                 setReaderUrl={setReaderUrl}
-                localStorage={localStorage}
                 setIsMinimized={setIsMinimized} />
+            :null }
 
             <h2 className='text-lg text-semibold'>Previous Tabs</h2>
             <ClosedTabsTable tabs={tabs} localStorage={localStorage} />

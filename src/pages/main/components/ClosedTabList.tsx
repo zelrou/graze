@@ -24,6 +24,7 @@ export default function ClosedTabList ({tabs, latestMarks}) {
             }
         }
     }
+    console.log('PREVTABS========', prevTabs)
     return !prevTabs.length ? null : prevTabs.map(pt => {
         return Object.keys(latestMarks).length && (
             <tr key={pt.url}>
