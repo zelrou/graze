@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   test: {
+    include: [
+        'tests/browser/**/*.{test,spec}.{ts,tsx}',
+        'tests/**/*.browser.{test,spec}.ts',
+    ],
     browser: {
       enabled: true,
       provider: playwright(),
