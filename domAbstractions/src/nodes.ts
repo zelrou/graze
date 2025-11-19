@@ -3,7 +3,7 @@ export const getnIdx = (cIdx, nodeEnds) => {
     let i = 0;
     let pad = 0;
     while (true) {
-        if (nodeEnds[i]>cIdx) {
+        if ((nodeEnds[i]>cIdx) && (i<nodeEnds.length)) {
             const prevNode = nodeEnds[i-1] ?? 0;
             pad = cIdx - prevNode;
             break;
@@ -54,6 +54,79 @@ export class Element {
            yield [[step, start, stop, i],this.children.slice(i,i+step)]
             i = i + step;
         }
+    }
+    addChild(child){
+        this.children = this.children.concat(child)
+    }
+
+    child(nIdx){
+        if (!Array.isArray(nIdx)) return this.children.at(nIdx)
+        let parent = this;
+        for (let level of nIdx) {
+            parent = parent.child(level)
+        }
+        return parent;
+    }
+
+    clone(){
+        const propsCopy = JSON.parse(JSON.stringify(this.props))
+        if (this.isLeaf) return new Element(this.children, this.type, propsCopy)
+        const clone = new Element(new Array(), this.type, propsCopy)
+        for (let child of this.children){
+            clone.addChild(child.clone())
+        }
+        return clone;
+    }
+
+    slice(nIdxA=0, nIdxB=-1){
+        const clone = this.clone()
+        clone.children = clone.children.slice(nIdxA, nIdxB)
+        return clone
+    }
+
+    leaves(path=[], found=[]){
+        if (this.isLeaf) return 0
+        for(let i=0;i<this.children.length;i++) {
+            const child = this.children[i]
+            if (!child.charLen) {
+                continue;
+            }
+            if (child.isLeaf) {
+                found.push([...path, i])
+            } else {
+                child.leaves([...path,i], found)
+            }
+        }
+        return found
+    }
+
+    get height(){
+        const paths = this.leaves()
+        const pathHeights = paths.map(path=>path.length)
+        return Math.max.apply(null, pathHeights)
+    }
+
+    sliceChars(cIdxA=0, cIdxB=-1){
+        if (this.isLeaf) return this.slice(cIdxA, cIdxB)
+        const a = this.getWithCharIdx(cIdxA)
+        const b = this.getWithCharIdx(cIdxB)
+        const nodeSlice = this.slice(a[0], b[0])
+    }
+
+    static parse(dom){
+        return parseDomToElement(dom)
+    }
+
+    get charEnds(){
+        const leaves = this.leaves()
+        const charLens = leaves.map(path=>this.child(path).charLen)
+        const charEndList = makeNodeEnds(charLens)
+        const zipped = leaves.map((path,i)=>[path, charEndList[i]])
+        return zipped
+    }
+
+    getWithCharIdx(cIdx){
+        return getnIdx(cIdx, this.charEnds)
     }
 }
 
@@ -119,4 +192,21 @@ export class Part {
     }
 }
 
-
+export const parseDomToElement = (domElem) => {
+    const {nodeName, childNodes} = domElem;
+    if(nodeName === '#text'){
+        return new Element(domElem.data, '#text', {})
+    }
+    const elem = new Element([], domElem.nodeName, {})
+    for (let child of Array.from(domElem.childNodes)){
+        if(child.nodeName === '#text'){
+            elem.addChild(new Element(child.data, '#text', {}))
+        } else {
+            elem.addChild(parseDomToElement(child))
+            //res.push(new Element(child.children, child.nodeName))
+            //console.log(child)
+            //continue;
+        }
+    }
+    return elem
+}

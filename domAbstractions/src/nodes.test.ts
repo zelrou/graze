@@ -21,14 +21,10 @@ test('makeNodeEnds', () => {
 
 
 test('getnIdx', () => {
-    /*
     const charLenArr = fakeParagraphArr.map(s=>s.length)
     const nodeEnds = makeNodeEnds(charLenArr)
-
-            getnIdx(200*x, nodeEnds)
-        ]
-    });
-    */
+    const res = getnIdx(200, nodeEnds)
+    assert.sameMembers(res,[1,31])
 })
 
 
