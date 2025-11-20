@@ -10,7 +10,7 @@ import {
     getParagraphsWithHeadings,
     phXPath
 } from '../../src/xpathUtils.tsx'
-import { Depth1Children5, Depth2Heading } from './NestedComponents.tsx'
+import { Depth1Children5, Depth2Heading, SliceTest } from './NestedComponents.tsx'
 
 describe.skip('clean and xpath eval', ()=>{
     const { readFile, writeFile, removeFile } = server.commands
@@ -61,6 +61,11 @@ describe('Element', ()=>{
         const screen3 = await render(<Depth2Heading />)
         const df3 = screen3.asFragment()
         fragments.push(df3.children[0])
+
+        const screen4 = await render(<SliceTest />)
+        const df4 = screen4.asFragment()
+        fragments.push(df4.children[0])
+
     })
 
     test('parse returns Element',async ()=>{
@@ -93,10 +98,10 @@ describe('Element', ()=>{
         assert.isFalse(Object.is(clone, elem))
     })
 
-    test('slice returns new element with child slice', ()=>{
+    test('shallow slice returns new element with child slice', ()=>{
         const frag = fragments[1]
         const elem = Element.parse(frag)
-        const elemSlice = elem.slice(1,4)
+        const elemSlice = elem.slice([1],[4])
         const lastChild = elemSlice.children.at(-1)
         assert.instanceOf(lastChild, Element)
         assert.deepEqual(lastChild.children[0].children, "more emphasized text")
@@ -126,17 +131,35 @@ describe('Element', ()=>{
         assert.strictEqual(elem.child(leaves[3]).children,"bold emphasized")
     })
 
-    test.todo('getWithCharIdx',()=>{
+    test('innerText', ()=>{
+        const frag = fragments[2]
+        const elem = Element.parse(frag)
+        console.log(elem.innerText)
+    })
+
+    test('getWithCharIdx',()=>{
         const frag = fragments[2]
         const elem = Element.parse(frag)
         const idx = elem.getWithCharIdx(11)
+        assert.sameMembers(idx[0], [1])
+        assert.strictEqual(idx[1], 6)
     })
 
-    test.todo('sliceChars', ()=>{
-        const frag = fragments[2]
+    test('deep slice returns nested slice', ()=>{
+        const frag = fragments[3]
         const elem = Element.parse(frag)
-        elem.sliceChars(11)
+        const elemSlice = elem.slice([4,1,0,2])
+        assert.strictEqual(elemSlice.innerText, 's5regs5b')
     })
+
+    test('deep slice ends at correct location', ()=>{
+        const frag = fragments[3]
+        const elem = Element.parse(frag)
+        const elemSlice = elem.slice([2], [3])
+        assert.strictEqual(elemSlice.innerText, 'regs3 bolds3 ems3')
+        assert.isTrue(elemSlice.children.length ===1)
+        assert.isTrue(elemSlice.children[0].children.length ===3)
+     })
 
     test.todo('walker correctly walks nested elements', () => {
         const frag = fragments[0]
@@ -145,6 +168,13 @@ describe('Element', ()=>{
         console.log(walker.next())
 
     })
+
+    test.todo('sliceChars', ()=>{
+        const frag = fragments[2]
+        const elem = Element.parse(frag)
+        elem.sliceChars(11)
+    })
+
 
 
 });

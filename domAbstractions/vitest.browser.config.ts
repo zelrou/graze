@@ -14,7 +14,15 @@ export default defineConfig({
       provider: playwright(),
       // https://vitest.dev/guide/browser/playwright
       instances: [
-                {browser: 'firefox'}
+                {browser: 'firefox'},
+                {
+                    browser: 'chromium',
+                    provider: playwright({
+                        launchOptions: {
+                            args: ['--disable-gpu']
+                        }
+                    })
+                }
       ],
     },
   },

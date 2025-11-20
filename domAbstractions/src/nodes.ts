@@ -1,3 +1,32 @@
+type Path = Array<number>|[]
+type PathOrNum = Path|number
+type PathOrNumOrNull = PathOrNum|null
+type ElementOrNull = Element|null
+type Children = Array<Element>|string
+type Child = Element|string
+
+type WalkerResult = [[step:number,start:number,stop:number,i:number],Children]
+interface ElementInterface {
+    children:Children,
+    type:string
+    props:object,
+    charEnds:Array<number>,
+    charLen:number,
+    height:number,
+    innerText:string,
+    isLeaf:boolean
+    addChild(el:Child):void,
+    child(path:PathOrNumOrNull):ElementOrNull,
+    walker(step:number,start:number,stop?:number):Iterator<WalkerResult[]>,
+    slice(start:PathOrNumOrNull, end:PathOrNumOrNull):Element,
+    clone():Element,
+    leaves():Array<Path>,
+    getWithCharIdx():Element
+}
+
+interface LeafElementInterface extends ElementInterface {
+    children:string
+}
 
 export const getnIdx = (cIdx, nodeEnds) => {
     let i = 0;
@@ -29,10 +58,18 @@ export const sumCharLens = (acc, curr) => {
     return acc + curr.charLen
 }
 
-export class Element {
+export class Element implements ElementInterface{
+    children:Array<Element>|string;
+    type:string;
+    props:object;
+
+    static isLeaf(el:Element):el is LeafElementInterface{
+        return ((typeof el.children) === 'string')
+    }
     get isLeaf(){
         return ((typeof this.children) === 'string')
     }
+
     get charLen(){
         let len;
         if (this.isLeaf) {
@@ -42,25 +79,27 @@ export class Element {
         }
         return len;
     }
+
     constructor(children='', type='', props={}){
         this.children = children
         this.type = type
         this.props = props
     }
-    *walker(step, start=0, end=null) {
-        let i=start;
-        const stop = end ?? this.charLen;
-        while((i<stop)&&(i<this.charLen)) {
-           yield [[step, start, stop, i],this.children.slice(i,i+step)]
-            i = i + step;
-        }
-    }
-    addChild(child){
+
+    addChild(child:Child){
         this.children = this.children.concat(child)
     }
 
-    child(nIdx){
-        if (!Array.isArray(nIdx)) return this.children.at(nIdx)
+    child( nIdx:PathOrNumOrNull ): ElementOrNull {
+        // returns itself if no argument provided
+        if ( (nIdx == null)
+            || (Array.isArray(nIdx) && nIdx.length === 0) )
+            return this;
+        // return child at idx if argument is number
+        if ( !Array.isArray(nIdx) )
+            return this.children.at(nIdx);
+        // the argument is a path
+        // make each child the new parent to arrive at target
         let parent = this;
         for (let level of nIdx) {
             parent = parent.child(level)
@@ -68,7 +107,7 @@ export class Element {
         return parent;
     }
 
-    clone(){
+    clone():Element{
         const propsCopy = JSON.parse(JSON.stringify(this.props))
         if (this.isLeaf) return new Element(this.children, this.type, propsCopy)
         const clone = new Element(new Array(), this.type, propsCopy)
@@ -78,17 +117,43 @@ export class Element {
         return clone;
     }
 
-    slice(nIdxA=0, nIdxB=-1){
+    slice(nIdxA=[0], nIdxB=[]):Element{
+        // if not arrays, wrap the arguments in arrays
+        const startIdx = (!Array.isArray(nIdxA) ? [nIdxA] : nIdxA)
+        // if no end argument, set to children.length
+        const endIdx = nIdxB.length===0 ? [this.children.length] : nIdxB
+        // always returns a clone
         const clone = this.clone()
-        clone.children = clone.children.slice(nIdxA, nIdxB)
+
+        // shallow slice
+        if (this.isLeaf || (startIdx.length === 1 && endIdx.length === 1)) {
+            clone.children = clone.children.slice(nIdxA[0], nIdxB[0])
+            return clone
+        }
+        // deep slice
+        for (let i=0; i<startIdx.length; i++) {
+            const start = startIdx.at(i)
+            const parent = clone.child((new Array(i)).fill(0))
+            parent.children = parent.children.slice(start)
+            // adjust the end indices as we contracted the array
+            const end = endIdx.at(i)
+            if (end != null)  endIdx[i] = end - start
+        }
+        for (let i=0; i<endIdx.length; i++) {
+            const path = endIdx.at(i)
+            const parent = clone.child((new Array(i)).fill(0))
+            parent.children = parent.children.slice(0, path)
+        }
+
         return clone
     }
 
-    leaves(path=[], found=[]){
-        if (this.isLeaf) return 0
+    leaves(path=[], found=[]):Array<Path>|[]{
+        if (this.isLeaf) return []
         for(let i=0;i<this.children.length;i++) {
-            const child = this.children[i]
+            const child = this.children.at(i)
             if (!child.charLen) {
+                // TODO: NOTE we could also reasonably call these leaves
                 continue;
             }
             if (child.isLeaf) {
@@ -106,12 +171,6 @@ export class Element {
         return Math.max.apply(null, pathHeights)
     }
 
-    sliceChars(cIdxA=0, cIdxB=-1){
-        if (this.isLeaf) return this.slice(cIdxA, cIdxB)
-        const a = this.getWithCharIdx(cIdxA)
-        const b = this.getWithCharIdx(cIdxB)
-        const nodeSlice = this.slice(a[0], b[0])
-    }
 
     static parse(dom){
         return parseDomToElement(dom)
@@ -126,8 +185,41 @@ export class Element {
     }
 
     getWithCharIdx(cIdx){
-        return getnIdx(cIdx, this.charEnds)
+        const charEnds = this.charEnds
+        const totals = charEnds.map(([path, total])=>total)
+        const [i, pad] = getnIdx(cIdx, totals)
+        const res = [charEnds[i][0], pad]
+        return res
     }
+
+    get innerText(){
+        const leaves = this.leaves()
+        const res = new Array()
+        for (let path of leaves) {
+            res.push(this.child(path).children)
+        }
+        return res.join('')
+    }
+
+    *walker(step:number, start:PathOrNum=[0], end:PathOrNumOrNull=null) {
+        let i=start;
+        const stop = end ?? this.charLen;
+        while((i<stop)&&(i<this.charLen)) {
+           yield [[step, start, stop, i],this.children.slice(i,i+step) as Children]
+            i = i + step;
+        }
+    }
+
+
+    /*
+    sliceChars(cIdxA=0, cIdxB=-1){
+        if (this.isLeaf) return this.slice(cIdxA, cIdxB)
+        const a = this.getWithCharIdx(cIdxA)
+        const b = this.getWithCharIdx(cIdxB)
+        const nodeSlice = this.slice(a[0], b[0])
+    }
+    */
+
 }
 
 export class PGraph {

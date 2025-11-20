@@ -19,3 +19,13 @@ export const Depth2Heading = ()=>{
         <b>bold1<em>bold emphasized</em>bold2</b>
     </h2>)
 }
+
+export const SliceTest = () => {
+    return(<div>
+        <span id="s1">regs1a<b> bolds1 </b>regs1b</span>
+        <span id="s2">regs2a<em> ems2 </em>regs2b</span>
+        <span id="s3">regs3<b> bolds3 </b><em>ems3</em></span>
+        <span id="s4">regs4</span>
+        <span id="s5">regs5a<em>ems5</em>regs5b</span>
+    </div>)
+}
