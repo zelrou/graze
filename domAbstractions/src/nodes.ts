@@ -1,3 +1,4 @@
+type NumberOrNull = number|null
 type Path = Array<number>|[]
 type PathOrNum = Path|number
 type PathOrNumOrNull = PathOrNum|null
@@ -5,7 +6,8 @@ type ElementOrNull = Element|null
 type Children = Array<Element>|string
 type Child = Element|string
 
-type WalkerResult = [[step:number,start:number,stop:number,i:number],Children]
+type WalkerState = [step:number,start:number,stop:number,i:number]
+type WalkerResult = [WalkerState,Element]
 interface ElementInterface {
     children:Children,
     type:string
@@ -28,21 +30,22 @@ interface LeafElementInterface extends ElementInterface {
     children:string
 }
 
-export const getnIdx = (cIdx, nodeEnds) => {
-    let i = 0;
+export const getnIdx = (cIdx: number, nodeEnds: number[]): [number, number] => {
     let pad = 0;
-    while (true) {
-        if ((nodeEnds[i]>cIdx) && (i<nodeEnds.length)) {
+    let i = 0;
+    if (nodeEnds.length === 0) return [-1,-1]
+    while(true){
+        if (( i < nodeEnds.length ) && ( nodeEnds[i] > cIdx )) {
             const prevNode = nodeEnds[i-1] ?? 0;
             pad = cIdx - prevNode;
             break;
         }
-        i++;
+       i = i + 1;
     }
     return [i, pad];
 }
 
-export const makeNodeEnds = (nodes) => {
+export const makeNodeEnds = (nodes: number[]): number[] => {
     const nodeEnds = new Array()
     let prev = 0;
     for (let i=0; i<nodes.length; i++) {
@@ -63,9 +66,11 @@ export class Element implements ElementInterface{
     type:string;
     props:object;
 
+    /*
     static isLeaf(el:Element):el is LeafElementInterface{
         return ((typeof el.children) === 'string')
     }
+    */
     get isLeaf(){
         return ((typeof this.children) === 'string')
     }
@@ -90,7 +95,7 @@ export class Element implements ElementInterface{
         this.children = this.children.concat(child)
     }
 
-    child( nIdx:PathOrNumOrNull ): ElementOrNull {
+    child( nIdx:PathOrNumOrNull ): string|Element|undefined {
         // returns itself if no argument provided
         if ( (nIdx == null)
             || (Array.isArray(nIdx) && nIdx.length === 0) )
@@ -130,19 +135,28 @@ export class Element implements ElementInterface{
             clone.children = clone.children.slice(nIdxA[0], nIdxB[0])
             return clone
         }
+
         // deep slice
-        for (let i=0; i<startIdx.length; i++) {
-            const start = startIdx.at(i)
+        // iterate through each level but the last and replace children 
+        // with array starting at that levels corresponding index
+        const startLevels = startIdx.length;
+        for (let i=0; i<startLevels; i++) {
+            const start = startIdx.at(i);
             const parent = clone.child((new Array(i)).fill(0))
+            const origLevelLen = parent.children.length;
             parent.children = parent.children.slice(start)
+            const lenDiff = Math.abs(parent.children.length - origLevelLen);
             // adjust the end indices as we contracted the array
             const end = endIdx.at(i)
-            if (end != null)  endIdx[i] = end - start
+            if (end !== undefined) {
+                endIdx[i] = end - lenDiff;
+            }
         }
+        // same as above, to slice off end accordingly
         for (let i=0; i<endIdx.length; i++) {
-            const path = endIdx.at(i)
-            const parent = clone.child((new Array(i)).fill(0))
-            parent.children = parent.children.slice(0, path)
+            const end = endIdx.at(i) + 1
+            const parent = clone.child(endIdx.slice(0,i))
+            parent.children = parent.children.slice(0, end)
         }
 
         return clone
@@ -171,7 +185,6 @@ export class Element implements ElementInterface{
         return Math.max.apply(null, pathHeights)
     }
 
-
     static parse(dom){
         return parseDomToElement(dom)
     }
@@ -185,6 +198,7 @@ export class Element implements ElementInterface{
     }
 
     getWithCharIdx(cIdx){
+        if (cIdx >= this.charLen) return undefined
         const charEnds = this.charEnds
         const totals = charEnds.map(([path, total])=>total)
         const [i, pad] = getnIdx(cIdx, totals)
@@ -201,25 +215,35 @@ export class Element implements ElementInterface{
         return res.join('')
     }
 
-    *walker(step:number, start:PathOrNum=[0], end:PathOrNumOrNull=null) {
-        let i=start;
-        const stop = end ?? this.charLen;
-        while((i<stop)&&(i<this.charLen)) {
-           yield [[step, start, stop, i],this.children.slice(i,i+step) as Children]
-            i = i + step;
+    *walker (step:number, start:number=0, end:NumberOrNull=null) {
+        let i = start;
+        // ensure stop doesnt exceed charLen
+        const maxCharLen = this.charLen - 1 + step
+        let stop = end ?? maxCharLen;
+        stop = Math.min(stop, maxCharLen)
+        while ((i < stop)) {
+            const status = [step, start, stop, i]
+            const sliceEndCharIdx = Math.min(i + step -1, this.charLen -1);
+
+            // find the path to the char indexes
+            const [startParent, startPad] = this.getWithCharIdx(i)
+            const [endParent, endPad] = this.getWithCharIdx(sliceEndCharIdx)
+
+            // declare mutable references
+            let startPath = startParent;
+            let endPath = endParent;
+       
+            // add the leaf padding to end of path
+            startPath = startPath.concat(startPad)
+            endPath = endPath.concat(endPad)
+
+            const slice = this.slice(startPath, endPath)
+            const res = [slice, status]
+            yield res
+            i = sliceEndCharIdx+1;
+
         }
     }
-
-
-    /*
-    sliceChars(cIdxA=0, cIdxB=-1){
-        if (this.isLeaf) return this.slice(cIdxA, cIdxB)
-        const a = this.getWithCharIdx(cIdxA)
-        const b = this.getWithCharIdx(cIdxB)
-        const nodeSlice = this.slice(a[0], b[0])
-    }
-    */
-
 }
 
 export class PGraph {

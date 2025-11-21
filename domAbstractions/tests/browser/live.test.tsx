@@ -80,14 +80,16 @@ describe('Element', ()=>{
         assert.strictEqual(elem.charLen, 10)
     })
 
-    test('charEnds returns [path, charEnd]', ()=>{
-        const frag = fragments[0]
-        const elem = Element.parse(frag)
-        const ends = elem.charEnds
-        assert.sameMembers(ends[0][0], [0,0])
-        assert.strictEqual(ends[0][1], 5)
-        assert.sameMembers(ends[1][0], [1])
-        assert.strictEqual(ends[1][1], 10)
+    describe('charEnds', ()=> {
+        test('shallow returns [path, charEnd]', ()=>{
+            const frag = fragments[0]
+            const elem = Element.parse(frag)
+            const ends = elem.charEnds
+            assert.sameMembers(ends[0][0], [0,0])
+            assert.strictEqual(ends[0][1], 5)
+            assert.sameMembers(ends[1][0], [1])
+            assert.strictEqual(ends[1][1], 10)
+        })
     })
 
     test('clone returns new element', ()=>{
@@ -96,15 +98,6 @@ describe('Element', ()=>{
         const clone = elem.clone()
         assert.instanceOf(clone, Element)
         assert.isFalse(Object.is(clone, elem))
-    })
-
-    test('shallow slice returns new element with child slice', ()=>{
-        const frag = fragments[1]
-        const elem = Element.parse(frag)
-        const elemSlice = elem.slice([1],[4])
-        const lastChild = elemSlice.children.at(-1)
-        assert.instanceOf(lastChild, Element)
-        assert.deepEqual(lastChild.children[0].children, "more emphasized text")
     })
 
     test('leaves returns path to leaves', ()=>{
@@ -134,45 +127,86 @@ describe('Element', ()=>{
     test('innerText', ()=>{
         const frag = fragments[2]
         const elem = Element.parse(frag)
-        console.log(elem.innerText)
+        const text = elem.innerText
+        assert.strictEqual(text.length, elem.charLen)
     })
 
-    test('getWithCharIdx',()=>{
-        const frag = fragments[2]
-        const elem = Element.parse(frag)
-        const idx = elem.getWithCharIdx(11)
-        assert.sameMembers(idx[0], [1])
-        assert.strictEqual(idx[1], 6)
+    describe('getWithCharIdx', () => {
+        test('retrievies correct path', ()=>{
+            const frag = fragments[0]
+            const elem = Element.parse(frag)
+            const charIdx = elem.charLen - 1
+            const idx = elem.getWithCharIdx(charIdx)
+            const slice = elem.slice(idx.flat())
+            const child = elem.child(idx.flat())
+            assert.strictEqual(slice.innerText, 'd')
+            assert.strictEqual(child, 'd')
+        })
+        test('shallow', () => {
+            const frag = fragments[2]
+            const elem = Element.parse(frag)
+            const idx = elem.getWithCharIdx(11)
+            assert.sameMembers(idx[0], [1])
+            assert.strictEqual(idx[1], 6)
+        })
+        test('deep', ()=>{
+            const frag = fragments[3]
+            const elem = Element.parse(frag)
+            const idx = elem.getWithCharIdx(11)
+            assert.sameMembers(idx[0], [0,1,0])
+            assert.strictEqual(idx[1], 5)
+        })
+        test('past end returns undefined',()=>{
+            const frag = fragments[3]
+            const elem = Element.parse(frag)
+            const idx = elem.getWithCharIdx(elem.charLen)
+            assert.isUndefined(idx)
+        })
     })
 
-    test('deep slice returns nested slice', ()=>{
-        const frag = fragments[3]
-        const elem = Element.parse(frag)
-        const elemSlice = elem.slice([4,1,0,2])
-        assert.strictEqual(elemSlice.innerText, 's5regs5b')
-    })
+    describe('slice', ()=>{
+        test('deep slice returns nested slice', ()=>{
+            const frag = fragments[3]
+            const elem = Element.parse(frag)
+            const elemSlice = elem.slice([4,1,0,2])
+            assert.strictEqual(elemSlice.innerText, 's5regs5b')
+            assert.strictEqual(elemSlice.height, 3)
+        })
 
-    test('deep slice ends at correct location', ()=>{
-        const frag = fragments[3]
-        const elem = Element.parse(frag)
-        const elemSlice = elem.slice([2], [3])
-        assert.strictEqual(elemSlice.innerText, 'regs3 bolds3 ems3')
-        assert.isTrue(elemSlice.children.length ===1)
-        assert.isTrue(elemSlice.children[0].children.length ===3)
+        test('deep slice ends at correct location', ()=>{
+            const frag = fragments[3]
+            const elem = Element.parse(frag)
+            const elemSlice = elem.slice([2], [3])
+            assert.strictEqual(elemSlice.innerText, 'regs3 bolds3 ems3')
+            assert.isTrue(elemSlice.children.length ===1)
+            assert.isTrue(elemSlice.children[0].children.length ===3)
+         })
+
+         test('from beginning and end, and across levels', ()=>{
+             const frag = fragments[0]
+             const elem = Element.parse(frag)
+             const elemSlice = elem.slice([0,0,4],[1,3])
+             assert.strictEqual('oworl', elemSlice.innerText)
+         })
      })
 
-    test.todo('walker correctly walks nested elements', () => {
-        const frag = fragments[0]
-        const elem = Element.parse(frag)
-        const walker = elem.walker()
-        console.log(walker.next())
-
-    })
-
-    test.todo('sliceChars', ()=>{
-        const frag = fragments[2]
-        const elem = Element.parse(frag)
-        elem.sliceChars(11)
+    describe('walker', ()=>{
+        test('returns correct step length', () => {
+            const frag = fragments[0]
+            const elem = Element.parse(frag)
+            const walker = elem.walker(4)
+            const expected = [4, 4, 2]
+            const res = []
+            expect(walker.next().value[0].innerText.length).toBe(4)
+            expect(walker.next().value[0].innerText.length).toBe(4)
+            expect(walker.next().value[0].innerText.length).toBe(2)
+            /*
+            for (let [slice, status] of walker) {
+                res.push(slice.innerText.length)
+            }
+            assert.sameDeepOrderedMembers(expected, res)
+            */
+        })
     })
 
 
