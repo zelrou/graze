@@ -1,3 +1,9 @@
+import createDOMPurify, { Config } from "dompurify";
+import {Element, PGraph, Part} from '@src/utils/abstractDOM';
+
+const purifyOpts:Config = {
+    RETURN_DOM: true
+}
 // Evaluate an XPath expression `expr` against a given DOM node
 // or Document object `node`, returning the results as an array
 // thanks wanderingstan at morethanwarm dot mail dot com for the
@@ -70,35 +76,222 @@ export function getXPathForElement(el, xml) {
   return xpath;
 }
 
-const phXPath = '//title|//meta[@name="AUTHOR"]|//p|//h1|//h2|//h3|//h4|//h5|//h6'
+interface parsedNode {
+    type:string,
+    props?:object|null,
+    children:string|Array<string|parsedNode>
+}
+
+class ParsedNode {
+    type;
+    props;
+    children;
+    charLength;
+    constructor(
+        type:string,
+        props?:object|null=null,
+        children:string|Array<string|parsedNode>,
+        charLength:number|null=null
+    ){
+        this.type = type;
+        this.props = props ?? null;
+        this.children = children;
+        this.charLength = charLength ?? null;
+        return this;
+    }
+}
+
+class ParsedContent {
+    charLength:number;
+    nodes:parsedNode[];
+    constructor( charLength:number, nodes?:ParsedNode[] ){
+        this.charLength = charLength;
+        this.nodes = nodes ?? new Array()
+        return this
+    }
+}
+
+const textContentElements = [
+    "BLOCKQUOTE",
+    "DL",
+    "FIGURE",
+    "OL",
+    "UL"
+]
+
+const inlineStyleElements = [
+    "ABBR",
+    "B",
+    "BDI",
+    "BDO",
+    "CITE",
+    "CODE",
+    "DATA",
+    "DFN",
+    "EM",
+    "I",
+    "KBD",
+    "MARK",
+    "Q",
+    "RP",
+    "RT",
+    "RUBY",
+    "S",
+    "SAMP",
+    "SMALL",
+    "SPAN",
+    "STRONG",
+    "SUP",
+    "TIME",
+    "U",
+    "VAR",
+    "WBR"
+]
+
+const parseXPathRes = (res, found) => {
+    const { nodeName } = res;
+    switch( nodeName ) {
+        case "TITLE": {
+            found.title = res.innerText
+            break;
+        }
+
+        case "META": {
+            found.author = res.content
+            break;
+        }
+
+        case "H1":
+        case "H2":
+        case "H3":
+        case "H4":
+        case "H5":
+        case "H6": {
+            const content = {
+                heading: res.innerText,
+                paragraphs: [res.innerText]
+            }
+            found.parts.push(content)
+            const elem = new Element(res.innerText, nodeName)
+            const pgraph = new PGraph([elem])
+            const part = new Part([pgraph], res.innerText)
+            console.log(part)
+            found.newParts.push(part)
+            break;
+        }
+
+        case "P":
+        case "PRE": {
+            // IN CASE NO PARTS YET
+            if (!found.parts.length)
+                found.parts.push(new Array())
+            if (!found.newParts.length)
+                found.newParts.push(new Part())
+
+            const latestPart = found.parts.at(-1)
+            const latestNewPart = found.newParts.at(-1)
+            const {
+                innerText,
+                childNodes,
+                childElementCount
+            } = res;
+
+            const normalizedText = innerText.normalize()
+            if (!normalizedText.length)
+                break;
+
+            if ( !latestPart.paragraphs )
+                latestPart.paragraphs = new Array();
+
+            const charLength = normalizedText.length
+            if (!charLength)
+                break;
+
+            const content= new ParsedContent(charLength)
+
+            if ( childElementCount === 0 ) {
+                const textNode = new ParsedNode(
+                    '#text',
+                    null,
+                    normalizedText,
+                    normalizedText.length
+                )
+                content.nodes.push(textNode)
+                latestPart.paragraphs.push(content)
+                break;
+            }
+
+            for(let child of childNodes) {
+                const { nodeName } = child;
+                let parsedChildNode;
+                if (nodeName==='#text') {
+                    parsedChildNode = new ParsedNode(
+                        '#text',
+                        null,
+                        child.data,
+                        child.data.length
+                    )
+                    content.nodes.push(parsedChildNode)
+                    continue;
+                } else if (nodeName=== 'A') {
+                    const anchorProps = {
+                        href: child.href,
+                        title: child.title
+                    }
+                    parsedChildNode = new ParsedNode(
+                        'a',
+                        anchorProps,
+                        child.innerText,
+                        child.innerText.length
+                    )
+                    content.nodes.push(parsedChildNode)
+                    continue;
+                } else if (inlineStyleElements.includes(nodeName)) {
+                    const parsedInlineNode = new ParsedNode(
+                        nodeName,
+                        {},
+                        child.innerText,
+                        child.innerText.length
+                    )
+                    content.nodes.push(parsedInlineNode)
+                }
+            }
+
+            latestPart.paragraphs.push(content)
+            break;
+
+        }
+
+        default: {
+            found.parts.push({
+                'heading': found.title,
+                'paragraphs': [res.innerText]
+            })
+        }
+    }
+}
+
+const phXPath = [`//title`,`//meta[@name="AUTHOR"]`,`//p`,`//h1`,`//h2`,`//h3`,
+`//h4`,`//h5`,`//h6`, `//pre`, `//blockquote`, `//code`].join(`|`)
 export function getParagraphsWithHeadings(node, expr=phXPath) {
+    const DOMPurify = createDOMPurify(node);
+    const clean = DOMPurify.sanitize(node.document.documentElement, purifyOpts)
+    //console.dir(clean)
     const xpe = new XPathEvaluator();
     const nsResolver =
-        node.ownerDocument === null
-          ? node.documentElement
-          : node.ownerDocument.documentElement;
-    const result = xpe.evaluate(expr, node, nsResolver,
+        clean.ownerDocument === null
+          ? clean.documentElement
+          : clean.ownerDocument.documentElement;
+    const result = xpe.evaluate(expr, clean, nsResolver,
         XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
     //console.log(result);
-    const found = {author: null, title: null, parts:[]};
+    const found = {author: null, title: null, parts:[], newParts:[]};
     let res;
     while ((res = result.iterateNext())) {
-        //console.log(res)
-        if (res.tagName === "TITLE") { found.title = res.innerText }
-        else if (res.tagName === "META") { found.author = res.content }
-        else if (res.tagName.at(0) === "H") {
-            found.parts.push({heading: res.innerText, paragraphs:[res.innerText]})
-        } else if (res.tagName === "P") {
-            //console.log('entered P', res, found)
-            if (found.parts.length && found.parts.at(-1).hasOwnProperty('paragraphs')) {
-                found.parts.at(-1)['paragraphs'].push(res.innerText)
-            } else {
-                found.parts.push({
-                    'heading': found.title,
-                    'paragraphs': [res.innerText]
-                })
-            }
-        }
+        //console.log(res, found)
+        parseXPathRes(res, found)
     }
     return found;
 }
+
+

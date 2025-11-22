@@ -17,7 +17,7 @@ let _paragraphs = Array.from(paragraphNodes).map((el)=>{
 browser.runtime.onMessage.addListener((request) => {
     console.log("Message from the background script:");
     console.log(request.greeting);
-    const structuredWork = getParagraphsWithHeadings(document)
+    const structuredWork = getParagraphsWithHeadings(window)
     return Promise.resolve({
         response: "Hi from content script",
         structuredWork

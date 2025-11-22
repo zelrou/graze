@@ -1,6 +1,7 @@
 import {
     useState, useEffect, useEffectEvent, createContext, useContext,
-    memo, useMemo, useRef, useCallback
+    memo, useMemo, useRef, useCallback,
+    createElement
 } from 'react';
 import { LocalStorageContext } from './contexts';
 
@@ -9,10 +10,10 @@ DEFAULTS.DELAY = 3000;
 
 const svgChevronUp = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-    </svg>)
+</svg>)
 const svgChevronDown = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-    </svg>)
+</svg>)
 const svgChevronRight = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-7">
   <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
 </svg>)
@@ -21,7 +22,7 @@ const svgChevronLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" view
 </svg>)
 const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
-    </svg>)
+</svg>)
 const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
 </svg>)
@@ -309,6 +310,7 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
     let mainText;
     let isCursorAtEnd;
     const paragraphChanged = paragraphUrl !== prevParagraphUrl.current;
+    const prevNodeIndex = useRef(null)
     if (paragraphChanged) {
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
@@ -322,10 +324,92 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
         currentPart = structuredWork.parts[partIndex]
         paragraphLength = currentPart.paragraphs.length
         currentParagraph = currentPart.paragraphs[paragraphIndex]
-        charLength = currentParagraph.length
+        charLength = currentParagraph.charLength
         heading = currentPart.heading
-        mainText = currentParagraph.slice(charIndex, charIndex+charInterval)
+        /* TODO: implement isCursorAtEnd? */
         isCursorAtEnd = false;
+
+        /* IF: currentParagraph is all text */
+        if (typeof currentParagraph === 'string') {
+            mainText = currentParagraph.slice(charIndex, charIndex+charInterval)
+            charLength = currentParagraph.length
+        /* ELSE: currentParagraph is a mix of node and elements */
+        } else {
+            mainText = []
+            let charOffsetStart, charOffsetEnd;
+            const {nodes} =currentParagraph
+            /* TODO set nodeIndex to state or ref? */
+            let nodeIndexStart, nodeIndexEnd;
+            // IF we are at start of paragraph,
+            if (charIndex === 0) {
+                // THEN sync nodeIndex w charIndex
+                nodeIndexStart = 0;
+
+            // ELSE we need to find nodeIndexStart
+            // loop until we hit charIndex or end of paragraph nodes
+            } else {
+                let charTotal = 0;
+                let i = 0;
+                do {
+                    // we dont want to increment charTotal directly yet
+                    const _charTotal = charTotal + nodes[i].charLength;
+                    if (_charTotal < charIndex) {
+                        // we're still behind index, keep seeking
+                        charTotal = _charTotal;
+                        i = i + 1;
+                    } else {
+                        // this node is at least long enough to reach index
+                        // break early to keep the index
+                        break;
+                    }
+                } while ((charTotal < charIndex) && (i<nodes.length-1))
+
+                nodeIndexStart = i;
+            }
+            // continue seek method from nodeIndexStart
+            // to find nodeIndexEnd
+            // however this time stop before exceeding charInterval
+            let charTotal = 0;
+            let i = nodeIndexStart;
+            do {
+                const _charTotal = charTotal + nodes[i].charLength;
+                if (_charTotal < charInterval) {
+                    charTotal = _charTotal;
+                    i = i + 1;
+                } else {
+                    if (prevNodeIndex.current === nodeIndexStart) {
+                        charOffsetStart = charInterval - charTotal;
+                    }
+                    break;
+                }
+            } while ((charTotal < charInterval) && (i<nodes.length-1))
+            nodeIndexEnd = i;
+
+            if (prevNodeIndex.current === nodeIndexStart) {
+                charOffsetStart = charIndex + charOffsetStart;
+            } else {
+                charOffsetStart = 0;
+            }
+
+            prevNodeIndex.current = nodeIndexEnd;
+
+            console.log(charIndex, nodeIndexStart, nodeIndexEnd, charOffsetStart)
+            const nodeSlice = nodes.slice(nodeIndexStart, nodeIndexEnd + 1)
+            for (let node of nodeSlice) {
+                if (node.type === '#text'){
+                    mainText.push(node.children.slice(charOffsetStart, charInterval))
+                } else {
+                    const el = createElement(
+                        node.type,
+                        node.props,
+                        node.children
+                    )
+                    mainText.push(el)
+                }
+            }
+        }
+
+        console.log(mainText)
     }
 
     /* ========== SEEKING ========== */
@@ -588,7 +672,7 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
         /*`before:content-[${charIndex===0 ? "'P"+paragraphIndex+"'" : ''}]`*/
         ].join(' ')
 
-
+    window.strucuredWork = structuredWork;
     console.log('Reader prerender:')//, heading, structuredWork.parts[partIndex])
     return (
         <>
@@ -702,7 +786,7 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
                         {svgChevronLeft}</button>
 
                     {/* MAIN TEXT */}
-                    <div className={`flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
+                    <div className={`resize-x flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
                         overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
                         <h3 className='mb-8'>{ heading }</h3>
                         <p style={{ fontSize: `${fontSize}rem`}} className={classesMainText}>

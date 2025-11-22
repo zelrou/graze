@@ -15,8 +15,9 @@ export default function OpenTabList({
     }) {
 
     const sendMessageToTab = useCallback(async tabId => {
-        const tabResponse = await browser.tabs.sendMessage(tabId,
-            { greeting: "Hi from background script" })
+        const tabResponse = await browser.tabs.sendMessage(tabId, {
+            greeting: "Hi from background script",
+        })
         console.log("Message from the content script:");
         console.log(tabResponse);
         structuredWork.current = tabResponse.structuredWork
