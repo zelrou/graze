@@ -1,0 +1,40 @@
+{
+  "name": "dom-abstractions",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:browser": "vitest --config=vitest.browser.config.ts",
+    "test:debug_browser": "vitest --config=vitest.browser.config.ts --inspect-brk --browser=chromium --no-file-parallelism",
+    "test:browser_headless": "vitest --config=vitest.browser.config.ts --browser.headless"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^10.1.0",
+    "dompurify": "^3.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "xpath": "^0.0.34"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/browser-playwright": "^4.0.9",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.9",
+    "vitest-browser-react": "^2.0.2"
+  }
+}
