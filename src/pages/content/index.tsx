@@ -1,4 +1,4 @@
-import { getParagraphsWithHeadings } from "../main/xpathUtils";
+import { getParagraphsWithHeadings } from "@src/utils/domAbstractions/src/xpathUtils"
 
 try {
   console.log('content script loaded');

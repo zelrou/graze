@@ -1,5 +1,6 @@
-import createDOMPurify, { Config } from "dompurify";
-import {Element, PGraph, Part} from '@src/utils/abstractDOM';
+import type { Config } from "dompurify";
+import createDOMPurify from "dompurify";
+import {Element, PGraph, Part} from './nodes'
 
 const purifyOpts:Config = {
     RETURN_DOM: true
@@ -148,7 +149,7 @@ const inlineStyleElements = [
     "WBR"
 ]
 
-const parseXPathRes = (res, found) => {
+export const parseXPathRes = (res, found) => {
     const { nodeName } = res;
     switch( nodeName ) {
         case "TITLE": {
@@ -271,20 +272,37 @@ const parseXPathRes = (res, found) => {
     }
 }
 
-const phXPath = [`//title`,`//meta[@name="AUTHOR"]`,`//p`,`//h1`,`//h2`,`//h3`,
-`//h4`,`//h5`,`//h6`, `//pre`, `//blockquote`, `//code`].join(`|`)
-export function getParagraphsWithHeadings(node, expr=phXPath) {
-    const DOMPurify = createDOMPurify(node);
-    const clean = DOMPurify.sanitize(node.document.documentElement, purifyOpts)
-    //console.dir(clean)
-    const xpe = new XPathEvaluator();
+export const _cleanNode = (str) => {
+    const clean = createDOMPurify.sanitize(str, purifyOpts)
     const nsResolver =
         clean.ownerDocument === null
           ? clean.documentElement
           : clean.ownerDocument.documentElement;
+    return [clean, nsResolver]
+}
+export const cleanNode = (node) => {
+    const DOMPurify = createDOMPurify(node);
+    const clean = DOMPurify.sanitize(node.document.documentElement, purifyOpts)
+    const nsResolver =
+        clean.ownerDocument === null
+          ? clean.documentElement
+          : clean.ownerDocument.documentElement;
+    return [clean, nsResolver]
+}
+
+export const phXPath = [`//title`,`//meta[@name="AUTHOR"]`,`//p`,`//h1`,`//h2`,`//h3`,
+`//h4`,`//h5`,`//h6`, `//pre`, `//blockquote`, `//code`].join(`|`)
+
+export const evalXPath = (expr=phXPath, clean, nsResolver) => {
+    const xpe = new XPathEvaluator();
     const result = xpe.evaluate(expr, clean, nsResolver,
         XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-    //console.log(result);
+    return result;
+}
+
+export function getParagraphsWithHeadings(node, expr=phXPath) {
+    const [clean, nsResolver] = cleanNode(node);
+    const result = evalXPath(phXPath, clean, nsResolver)
     const found = {author: null, title: null, parts:[], newParts:[]};
     let res;
     while ((res = result.iterateNext())) {
