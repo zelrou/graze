@@ -1,0 +1,146 @@
+import { listeners } from 'process';
+import {
+    useState, useEffect, useRef, useReducer, createContext, useContext,
+    useSyncExternalStore
+} from 'react';
+
+/*
+.failure {
+background: rgb(255, 100, 100);
+}
+
+.success {
+background: rgb(50, 255, 50);
+}
+
+:popover-open {
+position: absolute;
+inset: unset;
+right: 5px;
+bottom: 5px;
+}
+*/
+
+
+
+console.log('what toastList')
+export default function ToastList({messageList, toastRefList}) {
+
+    /*
+    const [prevLen, setPrevLen] = useState(0)
+    useEffect(()=>{
+    if (messageList.length !== prevLen){
+        setTimeout(()=>{
+        setPrevLen(messageList.length);
+        },4000)
+    }
+    },[messageList,prevLen])
+    */
+
+
+
+    const makeToast = (m,i) => {
+        console.log(toastRefList)
+        const j = (
+            <div key={`${i}${m}`} ref={el=>toastRefList.current[i]=el} popover="manual">
+                <p>{m}</p>
+            </div>
+        )
+        return j
+    }
+    console.log('what toast')
+
+
+    return messageList.map((m, i)=>makeToast(m,i))
+
+}
+
+
+/*
+function old() {
+    const successToastBtn = document.getElementById("success-toast-btn");
+    const failureToastBtn = document.getElementById("failure-toast-btn");
+    const counter = document.querySelector("p");
+
+    let successCount = 0;
+    let failCount = 0;
+
+    function makeToast(result) {
+      // Create an element and make it into a popover
+      const popover = document.createElement("article");
+      popover.popover = "manual";
+      popover.classList.add("toast");
+      popover.classList.add("newest");
+
+      let msg;
+
+      // Give the toast an appropriate text content, class for styling, and update
+      // the relevant count, depending on whether it was a success or a failure
+      if (result === "success") {
+        msg = "Action was successful!";
+        popover.classList.add("success");
+        successCount++;
+      } else if (result === "failure") {
+        msg = "Action failed!";
+        popover.classList.add("failure");
+        failCount++;
+      } else {
+        return;
+      }
+
+      // Give the toast its text content, and add it to the DOM
+      popover.textContent = msg;
+      document.body.appendChild(popover);
+
+      // Show the popover
+      popover.showPopover();
+
+      // Update the counter paragraph
+      updateCounter();
+
+      // Remove the toast again after 4 seconds
+      setTimeout(() => {
+        popover.hidePopover();
+        popover.remove();
+      }, 4000);
+
+      // When a new toast appears, run the movetoastsUp() function
+      popover.addEventListener("toggle", (event) => {
+        if (event.newState === "open") {
+          moveToastsUp();
+        }
+      });
+    }
+
+    function moveToastsUp() {
+      const toasts = document.querySelectorAll(".toast");
+
+      toasts.forEach((toast) => {
+        // If the toast is the one that has just appeared, we don't want it to move up.
+        if (toast.classList.contains("newest")) {
+          toast.style.bottom = `5px`;
+          toast.classList.remove("newest");
+        } else {
+          // Move up all the other toasts by 50px to make way for the new one
+          const prevValue = toast.style.bottom.replace("px", "");
+          const newValue = parseInt(prevValue) + 50;
+          toast.style.bottom = `${newValue}px`;
+        }
+      });
+    }
+
+    function updateCounter() {
+      // Update the counter paragraph with the new count each time a new toast is generated
+      counter.textContent = `Successes: ${successCount}. Failures: ${failCount}.`;
+    }
+
+    // Handlers to wire up the buttons to the makeToast() function
+    successToastBtn.addEventListener("click", () => {
+      makeToast("success");
+    });
+
+    failureToastBtn.addEventListener("click", () => {
+      makeToast("failure");
+    });
+}
+*/
