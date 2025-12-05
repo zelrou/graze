@@ -14,7 +14,8 @@ let _paragraphs = Array.from(paragraphNodes).map((el)=>{
 
 export default defineContentScript({
   matches: ['<all_urls>'],
-  main() {
+  registration: 'manifest',
+  main: function () {
     try {
       console.log('content script loaded');
     } catch (e) {
