@@ -76,9 +76,10 @@ export function useLocalStorage () {
     },[localStorage])
 
 
-    useEffect(async () => {
-            const res = await browser.storage.local.get()
-            localStorageDispatch({type:'set_all', payload: res});
+    useEffect(() => {
+            browser.storage.local.get().then(res=>{
+                localStorageDispatch({type:'set_all', payload: res});
+            });
     }, [])
 
 
@@ -105,12 +106,13 @@ export function useLocalStorage () {
     }, [])
 
     /* TODO declaring isStorageInitialized dependencies throws error? */
-    useEffect(async () => {
+    useEffect(() => {
         if (!isStorageInitialized) {
-            const keys = await browser.storage.local.getKeys();
-            const res = normalizeStorage(keys)
-            console.log(res)
-            setIsStorageInitialized(true);
+            browser.storage.local.getKeys().then(keys=>{
+                const res = normalizeStorage(keys)
+                console.log(res)
+                setIsStorageInitialized(true);
+            })
         }
     },[normalizeStorage, setIsStorageInitialized])
 

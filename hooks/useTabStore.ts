@@ -63,11 +63,11 @@ export const useTabStore = () => {
         setTabs(tabs=>tabs.filter(t=>t.id !== tabId))
     }
 
-    useEffect(async () => {
+    useEffect(() => {
         console.log('tabStore useEffect runs')
         /* TODO denylistProtocol on tabs here */
-        let tabs = await getTabs();
-        setTabs(tabs);
+        getTabs().then(t=>setTabs(t));
+        // setTabs(tabs);
 
         const updateFilters:UpdateFilter = { properties: [
             'status',
