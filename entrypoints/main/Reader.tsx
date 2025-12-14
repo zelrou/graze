@@ -3,7 +3,8 @@ import {
     memo, useMemo, useRef, useCallback,
     createElement
 } from 'react';
-import { LocalStorageContext } from '@/contexts';
+import { LocalStorageContext, SetLocationContext, ShadowContext } from '@/contexts';
+import { SearchContainer } from '@/features/search';
 
 const DEFAULTS = {};
 DEFAULTS.DELAY = 3000;
@@ -19,9 +20,6 @@ const svgChevronRight = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" vie
 </svg>)
 const svgChevronLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-7">
   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-</svg>)
-const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
 </svg>)
 const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -40,113 +38,6 @@ const svgCog6Tooth = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
 </svg>)
 
-
-
-const SetLocationContext = createContext(null)
-const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
-    const { setLocation } = useContext(SetLocationContext)
-    const sIdx = match.at(0)
-    const pIdx = match.at(1)
-    const cIdx = match.at(2)
-    const locString = `${sIdx}.${pIdx}.${cIdx}`
-    return (<tr>
-        <td className='border-b p-2 pl-8 border-gray-300'>{match[3]}</td>
-        <td className='border-b p-2 pl-8 border-gray-300 text-right'>{locString}</td>
-        <td className='border-b border-gray-300'>
-            <button className='w-full h-full hover:bg-emerald-500/50'
-                onClick={()=>{
-                    setLocation(sIdx, pIdx, cIdx)
-                    setIsOpenSearchContainer(false)
-                }}>
-                {svgChevronRight2}</button></td>
-        </tr>)
-}
-
-const SearchResultTable = memo(({searchResults, paragraphUrl, setIsOpenSearchContainer}) => {
-    const tableRows = searchResults.map(searchResult=>(
-        <SearchResultTableRow match={searchResult} setIsOpenSearchContainer={setIsOpenSearchContainer} />))
-    return (<table className='border-separate'>
-        <thead><td></td><td></td><td></td></thead>
-        <tbody className={'text-sm'}>{tableRows}</tbody>
-    </table>)
-})
-
-function* genParts(sw) {
-    yield* sw.parts.entries()
-}
-
-function* genParagraphs(sw) {
-    for (let [sIdx, part] of genParts(sw)) {
-        for (let [pIdx, paragraph] of part.paragraphs.entries()){
-            yield [sIdx,pIdx,paragraph,part.heading]
-        }
-    }
-}
-
-const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer}) => {
-    const [searchQuery, setSearchQuery] = useState('')
-    const prevParagraphUrl = useRef(null)
-    const searchInputRef = useRef(null)
-    if (paragraphUrl !== prevParagraphUrl.current) {
-        prevParagraphUrl.current = paragraphUrl
-        setSearchQuery('')
-        if (searchInputRef.current) searchInputRef.current.value = ''
-    }
-    const contextLen = 40;
-    const searchResults = useMemo(() => {
-        const q = searchQuery
-        const res = []
-
-        if (!q) return [];
-        let rQ;
-        try {
-            rQ = new RegExp(q, 'gid')
-        } catch (e) {
-            console.error(e);
-            return res;
-        }
-        console.log('starting search', paragraphUrl, rQ);
-        for (let paragraph of genParagraphs(structuredWork)) {
-            //console.log(paragraph)
-            const target = paragraph[2]
-            // console.log('searching target,query', target, rQ)
-            const matches = target.matchAll(rQ)
-            for (const match of matches) {
-                const startMatch = match.index
-                const endMatch = match.indices[0][1]
-                const ctxStart = Math.max(0,startMatch-contextLen)
-                const ctxEnd = endMatch + contextLen
-                const contextMatch = match.input.slice(ctxStart, ctxEnd)
-                // console.log(target, paragraph)
-                const m = [paragraph[0],paragraph[1],startMatch,contextMatch]
-                res.push(m)
-            }
-        }
-        return res;
-    }, [searchQuery])
-
-    const handleQueryChange = e => e.stopPropagation();
-
-    const handleSubmitSearch = e => {
-        e.preventDefault();
-        const form = e.target;
-        const formData = new FormData(form);
-        const {query} = Object.fromEntries(formData)
-        console.log('search submit data', query);
-        setSearchQuery(query);
-    }
-
-    console.log(searchResults)
-    return(<>
-        <form className='ml-4 p-1 flex flex-row space-x-2' method='post' onSubmit={handleSubmitSearch}>
-            <input name='query' type='text' minLength={4} maxLength={20}
-                className='bg-zinc-700 pl-1 font-sans focus:outline-2'
-                onChange={handleQueryChange} ref={searchInputRef} autoFocus />
-            <button className='border-2 border-zinc-700 px-3 py-1 hover:border-zinc-400'> Search</button>
-        </form>
-        <SearchResultTable searchResults={searchResults} paragraphUrl={paragraphUrl} setIsOpenSearchContainer={setIsOpenSearchContainer}/>
-    </>)
-}
 
 const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePaused}) => {
     const { setLocation } = useContext(SetLocationContext)
@@ -276,9 +167,29 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
     </form></div>)
 }
 
-export default function Reader({paragraphUrl, structuredWork, localStorage,
-    handleClickMinimize, isMinimized, setIsMinimized, isPaused, togglePaused,
-    addToast}) {
+function RenderMain({charIndex, charInterval}){
+    const { range } = useContext(ShadowContext)
+    const mainTextRef = useRef(null)
+
+    useEffect(()=>{
+        if (mainTextRef.current && range.current){
+            mainTextRef.current.replaceChildren(
+                surroundRange(range.current))
+        }
+    }, [charIndex, charInterval])
+
+    return(<div ref={mainTextRef}></div>)
+}
+
+export default function Reader({
+    paragraphUrl,
+    structuredWork,
+    localStorage,
+    handleClickMinimize, isMinimized, setIsMinimized,
+    isPaused, togglePaused,
+    addToast
+}) {
+    const { range, shadow } = useContext(ShadowContext)
     const { setLocalStorage } = useContext(LocalStorageContext)
     console.log('================= Reader ===================')
     const [partIndex, setPartIndex] = useState(0);
@@ -301,6 +212,7 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
     const prevParagraphUrl = useRef(null)
+    const paragraphChanged = paragraphUrl !== prevParagraphUrl.current;
     let partLength;
     let currentPart;
     let paragraphLength;
@@ -309,9 +221,25 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
     let heading;
     let mainText;
     let isCursorAtEnd;
-    const paragraphChanged = paragraphUrl !== prevParagraphUrl.current;
-    const prevNodeIndex = useRef(null)
+    /* leaf stuff */
+    let leavesRef = useRef(null);
+    let leafLengthsRef = useRef(null);
+    let leafEndsRef = useRef(null);
     if (paragraphChanged) {
+        if (shadow.current !== null) {
+            // grab the content from shadow dom
+            leavesRef.current = getLeaves(shadow.current.firstChild)
+            // make cummulative length array
+            leafLengthsRef.current = leavesRef.current.map(n=>n.textContent.length)
+            leafEndsRef.current = makeNodeEnds(leafLengthsRef.current)
+            // initialize the range
+            const [endIdx, endOffset] = getnIdx(charInterval, leafEndsRef.current)
+            const leafRange = new Range();
+            leafRange.setStart(leavesRef.current[0], 0)
+            leafRange.setEnd(leavesRef.current[endIdx], endOffset)
+            range.current = leafRange
+            setCharIndex(0)
+        }
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
         setLocation(0,0,0)
@@ -335,150 +263,54 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
             charLength = currentParagraph.length
         /* ELSE: currentParagraph is a mix of node and elements */
         } else {
-            mainText = []
-            let charOffsetStart, charOffsetEnd;
-            const {nodes} =currentParagraph
-            /* TODO set nodeIndex to state or ref? */
-            let nodeIndexStart, nodeIndexEnd;
-            // IF we are at start of paragraph,
-            if (charIndex === 0) {
-                // THEN sync nodeIndex w charIndex
-                nodeIndexStart = 0;
+        
+        } 
 
-            // ELSE we need to find nodeIndexStart
-            // loop until we hit charIndex or end of paragraph nodes
-            } else {
-                let charTotal = 0;
-                let i = 0;
-                do {
-                    // we dont want to increment charTotal directly yet
-                    const _charTotal = charTotal + nodes[i].charLength;
-                    if (_charTotal < charIndex) {
-                        // we're still behind index, keep seeking
-                        charTotal = _charTotal;
-                        i = i + 1;
-                    } else {
-                        // this node is at least long enough to reach index
-                        // break early to keep the index
-                        break;
-                    }
-                } while ((charTotal < charIndex) && (i<nodes.length-1))
-
-                nodeIndexStart = i;
-            }
-            // continue seek method from nodeIndexStart
-            // to find nodeIndexEnd
-            // however this time stop before exceeding charInterval
-            let charTotal = 0;
-            let i = nodeIndexStart;
-            do {
-                const _charTotal = charTotal + nodes[i].charLength;
-                if (_charTotal < charInterval) {
-                    charTotal = _charTotal;
-                    i = i + 1;
-                } else {
-                    if (prevNodeIndex.current === nodeIndexStart) {
-                        charOffsetStart = charInterval - charTotal;
-                    }
-                    break;
-                }
-            } while ((charTotal < charInterval) && (i<nodes.length-1))
-            nodeIndexEnd = i;
-
-            if (prevNodeIndex.current === nodeIndexStart) {
-                charOffsetStart = charIndex + charOffsetStart;
-            } else {
-                charOffsetStart = 0;
-            }
-
-            prevNodeIndex.current = nodeIndexEnd;
-
-            console.log(charIndex, nodeIndexStart, nodeIndexEnd, charOffsetStart)
-            const nodeSlice = nodes.slice(nodeIndexStart, nodeIndexEnd + 1)
-            for (let node of nodeSlice) {
-                if (node.type === '#text'){
-                    mainText.push(node.children.slice(charOffsetStart, charInterval))
-                } else {
-                    const el = createElement(
-                        node.type,
-                        node.props,
-                        node.children
-                    )
-                    mainText.push(el)
-                }
-            }
-        }
-
-        console.log(mainText)
     }
 
     /* ========== SEEKING ========== */
     /* TODO structuredWork class
      * make seeking into instance methods returning location for set state */
     const getPrevMainText = () => {
-        const prevCharIndex = charIndex - charInterval;
-        const prevParagraphIndex = paragraphIndex - 1;
-        const prevPartIndex = partIndex - 1;
-        let prevCharLength;
-        let prevParagraphLength;
-        console.log('getPrevMainText', charIndex, prevCharIndex, prevParagraphIndex, prevPartIndex)
-        if (prevCharIndex < 0) { // we MAY need to go back a paragraph
-            if (prevParagraphIndex < 0) { // we need to go back a part
-                if (prevPartIndex < 0) { // we are at the beginnning
-                    return null
-                } else { // we will go back a whole part
-                    setPartIndex(prevPartIndex);
-                    prevParagraphLength = structuredWork.parts[prevPartIndex]
-                        .paragraphs.length
-                    prevCharLength = structuredWork.parts[prevPartIndex]
-                        .paragraphs[prevParagraphLength - 1].length
-                    // set paragraphIndex to last paragraph of previous part
-                    setParagraphIndex(prevParagraphLength - 1);
-                    // set charIndex to last chars of previous paragraph
-                    const cIdx = Math.max(0, prevCharLength - charInterval)
-                    setCharIndex(cIdx);
-                }
-            } else if (charIndex>0) { // we need to go to beginning of paragraph
-                setCharIndex(0);
-            } else{ // we DO need to go back a paragraph
-                console.log('go back a paragraph')
-                setParagraphIndex(prevParagraphIndex)
-                prevCharLength = structuredWork.parts[partIndex]
-                    .paragraphs[prevParagraphIndex].length
-                // set charIndex to last chars of previous paragraph
-                // set to in 0 in case prevCharIndex negative
-                const prevCharIndex = prevCharLength - charInterval
-                console.log(prevCharLength, prevCharIndex)
-                setCharIndex((prevCharIndex > 0) ? prevCharIndex : 0);
-            }
-        } else { // we just need to back by charInterval
-            setCharIndex(prevCharIndex)
-        }
+        console.log('getPrevMainText', charIndex)
+        let startCharIndex = charIndex - charInterval;
+        let endCharIndex = startCharIndex + charInterval;
+        const totalLength = leafEndsRef.current.at(-1)
+
+        if (startCharIndex < 0) startCharIndex = 0;
+        if (endCharIndex > totalLength) endCharIndex = totalLength - 1;
+
+        const [startIdx, startOffset] = getnIdx(
+            startCharIndex, leafEndsRef.current)
+        const [endIdx, endOffset] = getnIdx(
+            endCharIndex, leafEndsRef.current)
+
+        range.current.setStart(leavesRef.current[startIdx], startOffset)
+        range.current.setEnd(leavesRef.current[endIdx], endOffset)
+
+        setCharIndex(startCharIndex);
     }
 
     const getNextMainText = () => {
-        console.log('getNextMainText')//structuredWork, partIndex, paragraphIndex)
+        console.log('getNextMainText')
         const nextcharIndex = charIndex + charInterval
-        const nextParagraphIndex = paragraphIndex + 1
-        const nextPartIndex = partIndex + 1
+        let endCharIndex = nextcharIndex + charInterval;
+        const totalLength = leafEndsRef.current.at(-1)
 
-        if ( nextcharIndex > charLength - 1) { // we are at end of a paragraph
-            if (nextParagraphIndex > paragraphLength - 1) { // we are part end
-                if (nextPartIndex > partLength - 1) { // we are at end of work
-                    isCursorAtEnd = true;
-                    return null;
-                } else { // move to next part
-                    setPartIndex(nextPartIndex);
-                    setParagraphIndex(0);
-                    setCharIndex(0);
-                }
-            } else { // move to next paragraph
-                setParagraphIndex(nextParagraphIndex)
-                setCharIndex(0);
-            }
-        } else { // move to next charIndex
-            setCharIndex(nextcharIndex)
-        }
+        // charIndex is past totalLength, do nothing
+        if (nextcharIndex > totalLength) return null;
+        // endCharIndex is past totalLength, set former to latter
+        if (endCharIndex > totalLength) endCharIndex = totalLength-1; 
+
+        const [startIdx, startOffset] = getnIdx(
+            nextcharIndex, leafEndsRef.current)
+        const [endIdx, endOffset] = getnIdx(
+            endCharIndex, leafEndsRef.current)
+
+        range.current.setStart(leavesRef.current[startIdx], startOffset)
+        range.current.setEnd(leavesRef.current[endIdx], endOffset)
+
+        setCharIndex(nextcharIndex);
     }
 
     /* ========== TOOLBAR BOTTOM CONTROLS========== */
@@ -789,9 +621,9 @@ export default function Reader({paragraphUrl, structuredWork, localStorage,
                     <div className={`resize-x flex flex-col h-full w-full grow-0 lg:w-4/10 bg-zinc-800
                         overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
                         <h3 className='mb-8'>{ heading }</h3>
-                        <p style={{ fontSize: `${fontSize}rem`}} className={classesMainText}>
-                            { mainText }
-                        </p>
+                        <div style={{ fontSize: `${fontSize}rem`}} className={classesMainText}>
+                            <RenderMain charInterval={charInterval} charIndex={charIndex} />
+                        </div>
                     </div>
 
                     {/* PROGRESS BARS (FLOATING) */}

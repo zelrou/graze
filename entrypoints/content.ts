@@ -1,4 +1,4 @@
-import { getParagraphsWithHeadings } from "@/utils/xpathUtils.tsx"
+import { sanitzeAndReaderize } from "@/utils/xpathUtils.tsx"
 
 
 
@@ -24,10 +24,10 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((request) => {
         console.log("Message from the background script:");
         console.log(request.greeting);
-        const structuredWork = getParagraphsWithHeadings(window)
+        const article = sanitzeAndReaderize(document)
         return Promise.resolve({
             response: "Hi from content script",
-            structuredWork
+            article
         });
     });
   },
