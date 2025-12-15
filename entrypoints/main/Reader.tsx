@@ -21,11 +21,11 @@ const svgChevronRight = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" vie
 const svgChevronLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-7">
   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
 </svg>)
-const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
 </svg>)
-const svgArrowTurnDownLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m7.49 12-3.75 3.75m0 0 3.75 3.75m-3.75-3.75h16.5V4.499" />
+const svgArrowTurnDownLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="m7.49 12-3.75 3.75m0 0 3.75 3.75m-3.75-3.75h16.5V4.499" />
 </svg>)
 const svgPlay = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
@@ -93,7 +93,7 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
         const s = Number(formJson.partIndexInput)
         const p = Number(formJson.paragraphIndexInput)
         const c = Number(formJson.charIndexInput)
-        setLocation(s,p,c)
+        setLocation(c)
     }
 
     if (paragraphUrl !== prevParagraphUrl.current) {
@@ -189,8 +189,18 @@ export default function Reader({
     isPaused, togglePaused,
     addToast
 }) {
-    const { range, shadow } = useContext(ShadowContext)
-    const { setLocalStorage } = useContext(LocalStorageContext)
+    const {
+        range,
+        shadow,
+        leavesRef,
+        leafLengthsRef,
+        leafEndsRef
+    } = useContext(ShadowContext)
+
+    const {
+        setLocalStorage
+    } = useContext(LocalStorageContext)
+
     console.log('================= Reader ===================')
     const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
@@ -203,28 +213,25 @@ export default function Reader({
 
     /* ========== SEARCH STATE & LOCATION CONTEXT ========== */
     const [isOpenSearchContainer, setIsOpenSearchContainer] = useState(false)
-    const setLocation = useCallback((s=null, p=null, c=null) => {
-        if ((s===null) && (p===null) && (c===null)) return null
-        setPartIndex(s)
-        setParagraphIndex(p)
+    const setLocation = useCallback((c=null) => {
+        if (c===null) return null
+        // setPartIndex(s)
+        // setParagraphIndex(p)
         setCharIndex(c)
-    }, [setPartIndex, setParagraphIndex, setCharIndex])
+    }, [setCharIndex])
 
     /* ========== RESET LOCATION ON PROPS CHANGE ========== */
     const prevParagraphUrl = useRef(null)
     const paragraphChanged = paragraphUrl !== prevParagraphUrl.current;
-    let partLength;
-    let currentPart;
-    let paragraphLength;
-    let currentParagraph;
-    let charLength;
+    // let partLength; let currentPart; let paragraphLength; let currentParagraph; let charLength;
     let heading;
     let mainText;
     let isCursorAtEnd;
+    const computedShadow = {
+        totalLength: leafEndsRef.current?.at(-1)
+    }
+    const {totalLength} = computedShadow
     /* leaf stuff */
-    let leavesRef = useRef(null);
-    let leafLengthsRef = useRef(null);
-    let leafEndsRef = useRef(null);
     if (paragraphChanged) {
         if (shadow.current !== null) {
             // grab the content from shadow dom
@@ -233,39 +240,47 @@ export default function Reader({
             leafLengthsRef.current = leavesRef.current.map(n=>n.textContent.length)
             leafEndsRef.current = makeNodeEnds(leafLengthsRef.current)
             // initialize the range
-            const [endIdx, endOffset] = getnIdx(charInterval, leafEndsRef.current)
+            // const [endIdx, endOffset] = getnIdx(charInterval, leafEndsRef.current)
             const leafRange = new Range();
-            leafRange.setStart(leavesRef.current[0], 0)
-            leafRange.setEnd(leavesRef.current[endIdx], endOffset)
+            // leafRange.setStart(leavesRef.current[0], 0)
+            // leafRange.setEnd(leavesRef.current[endIdx], endOffset)
             range.current = leafRange
             setCharIndex(0)
         }
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
-        setLocation(0,0,0)
+        setLocation(0)
         setIsMinimized(false);
         setIsOpenSearchContainer(false);
-        isCursorAtEnd = false;
+        // isCursorAtEnd = false;
     } else {
         console.log('READER same url', paragraphUrl, prevParagraphUrl.current)//, structuredWork)
-        partLength = structuredWork.parts.length
-        currentPart = structuredWork.parts[partIndex]
-        paragraphLength = currentPart.paragraphs.length
-        currentParagraph = currentPart.paragraphs[paragraphIndex]
-        charLength = currentParagraph.charLength
-        heading = currentPart.heading
+        // partLength = structuredWork.parts.length
+        // currentPart = structuredWork.parts[partIndex]
+        // paragraphLength = currentPart.paragraphs.length
+        // currentParagraph = currentPart.paragraphs[paragraphIndex]
+        // charLength = currentParagraph.charLength
+        // heading = currentPart.heading
         /* TODO: implement isCursorAtEnd? */
-        isCursorAtEnd = false;
+        // isCursorAtEnd = false;
 
-        /* IF: currentParagraph is all text */
-        if (typeof currentParagraph === 'string') {
-            mainText = currentParagraph.slice(charIndex, charIndex+charInterval)
-            charLength = currentParagraph.length
-        /* ELSE: currentParagraph is a mix of node and elements */
+        // const totalLength = leafEndsRef.current.at(-1)
+
+        // shouldn't happen, but in case, set the index in bounds (rerender).
+        if (charIndex > totalLength) {
+            setCharIndex(totalLength - charInterval)
         } else {
-        
-        } 
+            let endCharIndex = charIndex + charInterval
+            if (endCharIndex > totalLength) endCharIndex = totalLength-1; 
 
+            const [startIdx, startOffset] = getnIdx(
+                charIndex, leafEndsRef.current)
+            const [endIdx, endOffset] = getnIdx(
+                endCharIndex, leafEndsRef.current)
+
+            range.current.setStart(leavesRef.current[startIdx], startOffset)
+            range.current.setEnd(leavesRef.current[endIdx], endOffset)
+        }
     }
 
     /* ========== SEEKING ========== */
@@ -280,14 +295,6 @@ export default function Reader({
         if (startCharIndex < 0) startCharIndex = 0;
         if (endCharIndex > totalLength) endCharIndex = totalLength - 1;
 
-        const [startIdx, startOffset] = getnIdx(
-            startCharIndex, leafEndsRef.current)
-        const [endIdx, endOffset] = getnIdx(
-            endCharIndex, leafEndsRef.current)
-
-        range.current.setStart(leavesRef.current[startIdx], startOffset)
-        range.current.setEnd(leavesRef.current[endIdx], endOffset)
-
         setCharIndex(startCharIndex);
     }
 
@@ -301,14 +308,6 @@ export default function Reader({
         if (nextcharIndex > totalLength) return null;
         // endCharIndex is past totalLength, set former to latter
         if (endCharIndex > totalLength) endCharIndex = totalLength-1; 
-
-        const [startIdx, startOffset] = getnIdx(
-            nextcharIndex, leafEndsRef.current)
-        const [endIdx, endOffset] = getnIdx(
-            endCharIndex, leafEndsRef.current)
-
-        range.current.setStart(leavesRef.current[startIdx], startOffset)
-        range.current.setEnd(leavesRef.current[endIdx], endOffset)
 
         setCharIndex(nextcharIndex);
     }
@@ -504,7 +503,6 @@ export default function Reader({
         /*`before:content-[${charIndex===0 ? "'P"+paragraphIndex+"'" : ''}]`*/
         ].join(' ')
 
-    window.strucuredWork = structuredWork;
     console.log('Reader prerender:')//, heading, structuredWork.parts[partIndex])
     return (
         <>
@@ -573,8 +571,9 @@ export default function Reader({
                     { (!paragraphUrl || !structuredWork)
                         ? null
                         : ( <SearchContainer
+                            charInterval={charInterval}
                             paragraphUrl={paragraphUrl}
-                            structuredWork={structuredWork}
+                            // structuredWork={structuredWork}
                             setIsOpenSearchContainer={setIsOpenSearchContainer}
                             /> ) }
                 </SetLocationContext>
@@ -595,7 +594,6 @@ export default function Reader({
                     <button className='grow basis-md p-1 hover:bg-green-500/50'
                         onClick={handleClickGetBookmarkLatest} >
                         Go Latest</button>
-
                     <button className='grow basis-md p-1 hover:bg-fuchsia-500/50'
                         onClick={handleClickSetBookmarkLatest} >
                         Set Progress</button>
@@ -622,7 +620,9 @@ export default function Reader({
                         overflow-scroll place-self-center border-7 border-gray-300/80  p-5`}>
                         <h3 className='mb-8'>{ heading }</h3>
                         <div style={{ fontSize: `${fontSize}rem`}} className={classesMainText}>
-                            <RenderMain charInterval={charInterval} charIndex={charIndex} />
+                            <RenderMain
+                                charInterval={charInterval}
+                                charIndex={charIndex} />
                         </div>
                     </div>
 
@@ -631,11 +631,11 @@ export default function Reader({
                         <div className='h-full grow flex flex-col-reverse justify-center '>
                             <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
                                 <div className='bg-red-500/50'
-                                    style={{width: `${charIndex/(charLength-1)*100}%`}}></div>
+                                    style={{width: `${charIndex/(totalLength-1)*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
-                                    {`${charIndex}/${charLength-1}`}</span>
+                                    {`${charIndex}/${totalLength-1}`}</span>
                             </div>
-                            <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
+                            {/* <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
                                 <div className='bg-green-500/50'
                                     style={{width: `${paragraphIndex/(paragraphLength-1)*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
@@ -646,7 +646,7 @@ export default function Reader({
                                     style={{width: `${partIndex/(partLength-1)*100}%`}}></div>
                                 <span className='text-xs text-black fixed text-zinc-300'>
                                     {`${partIndex}/${partLength-1}`}</span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 

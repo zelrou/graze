@@ -1,4 +1,6 @@
-import { SetLocationContext } from "@/contexts"
+import { memo, useMemo, useState, useContext, useRef } from "react"
+import { SetLocationContext, ShadowContext } from "@/contexts"
+import { getLeaves } from "@/utils/dom"
 
 const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
       <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
@@ -6,17 +8,19 @@ const svgChevronRight2 = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" vi
 
 const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
     const { setLocation } = useContext(SetLocationContext)
-    const sIdx = match.at(0)
-    const pIdx = match.at(1)
-    const cIdx = match.at(2)
-    const locString = `${sIdx}.${pIdx}.${cIdx}`
+    const { leafEndsRef } = useContext(ShadowContext)
+    const leaf = match.at(0).at(0)
+    const leafIdx = match.at(0).at(1)
+    const matchIdx = match.at(1)
+    const matchStr = match.at(2)
+    const charInterval = match.at(3)
     return (<tr>
-        <td className='border-b p-2 pl-8 border-gray-300'>{match[3]}</td>
-        <td className='border-b p-2 pl-8 border-gray-300 text-right'>{locString}</td>
+        <td className='border-b p-2 pl-8 border-gray-300'>{matchStr}</td>
+        <td className='border-b p-2 pl-8 border-gray-300 text-right'>{}</td>
         <td className='border-b border-gray-300'>
             <button className='w-full h-full hover:bg-emerald-500/50'
                 onClick={()=>{
-                    setLocation(sIdx, pIdx, cIdx)
+                    setLocation(leafEndsRef.current[leafIdx-1] + matchIdx)
                     setIsOpenSearchContainer(false)
                 }}>
                 {svgChevronRight2}</button></td>
@@ -27,7 +31,7 @@ const SearchResultTable = memo(({searchResults, paragraphUrl, setIsOpenSearchCon
     const tableRows = searchResults.map(searchResult=>(
         <SearchResultTableRow match={searchResult} setIsOpenSearchContainer={setIsOpenSearchContainer} />))
     return (<table className='border-separate'>
-        <thead><td></td><td></td><td></td></thead>
+        <thead><tr><td></td><td></td><td></td></tr></thead>
         <tbody className={'text-sm'}>{tableRows}</tbody>
     </table>)
 })
@@ -44,7 +48,8 @@ function* genParagraphs(sw) {
     }
 }
 
-export const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchContainer}) => {
+export const SearchContainer = ({ charInterval, paragraphUrl, setIsOpenSearchContainer}) => {
+    const { shadow, leavesRef, leafEndsRef } = useContext(ShadowContext)
     const [searchQuery, setSearchQuery] = useState('')
     const prevParagraphUrl = useRef(null)
     const searchInputRef = useRef(null)
@@ -67,6 +72,21 @@ export const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchCo
             return res;
         }
         console.log('starting search', paragraphUrl, rQ);
+        const leaves = getLeaves(shadow.current)
+        for (const [idx, leaf] of leaves.entries()) {
+          const matches = leaf.data.matchAll(rQ)
+          for (const match of matches) {
+            const startMatch = match.index
+            debugger;
+            const endMatch = match.indices[0][1]
+            const ctxStart = Math.max(0,startMatch-contextLen)
+            const ctxEnd = endMatch + contextLen
+            const contextMatch = match.input.slice(ctxStart, ctxEnd)
+            const m = [[leaf, idx], startMatch, contextMatch, charInterval]
+            res.push(m)
+          }
+        }
+        /*
         for (let paragraph of genParagraphs(structuredWork)) {
             //console.log(paragraph)
             const target = paragraph[2]
@@ -83,6 +103,7 @@ export const SearchContainer = ({structuredWork, paragraphUrl, setIsOpenSearchCo
                 res.push(m)
             }
         }
+        */
         return res;
     }, [searchQuery])
 

@@ -1,4 +1,3 @@
-
 type NumberOrNull = number|null
 type Path = Array<number>|[]
 type PathOrNum = Path|number
@@ -327,3 +326,16 @@ export const parseDomToElement = (domElem) => {
     }
     return elem
 }
+
+/* export const renderRangeToDOM =(r:Range)=>{
+    let currentNode = r.startContainer.cloneNode()
+    let parentNode = currentNode.parentElement
+    do{
+        const parentClone = parentElement.cloneNode()
+        parentClone.replaceChildren(currentNode)
+        
+    }
+    while (!!parentNode)
+        
+} */
+

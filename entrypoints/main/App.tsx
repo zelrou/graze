@@ -60,9 +60,11 @@ export default function App() {
 
   /* ========== CONTEXTS SETUP ========== */
   // Shadow Context refs
-  const walker = useRef(null)
   const range = useRef(null)
   const shadow = useRef(null)
+  const leavesRef = useRef(null);
+  const leafLengthsRef = useRef(null);
+  const leafEndsRef = useRef(null);
 
 
   const tabStatus = tabs.map(tab => ({ url: tab.url, status: tab.status }))
@@ -72,7 +74,7 @@ export default function App() {
   return (<div className={`relative w-screen min-h-screen h-full flex
         flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
     <LocalStorageContext value={{ localStorage, setLocalStorage }}>
-      <ShadowContext value={{ walker, range, shadow }}>
+      <ShadowContext value={{ range, shadow, leavesRef, leafLengthsRef, leafEndsRef }}>
         <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage} />
 
         <h2 className='text-lg text-semibold'>Open Tabs</h2>

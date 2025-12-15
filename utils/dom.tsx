@@ -37,5 +37,14 @@ export const surroundRange = (range: Range) => {
   return ancestorClone
 }
 
-// const domUtils = { getLeaves, surroundRange }
-// export default domUtils;
+/*
+export const setRangeWithLeaf = (
+  range:Range,
+  leaf:Element,
+  charInterval:number,
+  offset=0) =>
+{
+  range.setStart(leaf, offset)
+  range.setEnd()
+}
+*/
