@@ -5,8 +5,6 @@ import OpenTabList from "./OpenTabList"
 export default function OpenTabsTable({
   tabs,
   readerUrl,
-  setReaderUrl,
-  setIsMinimized
 }) {
 
   const articleHostRef = useRef(null)
@@ -16,6 +14,7 @@ export default function OpenTabsTable({
       if (articleHostRef.current !== null && shadow.current === null) {
         shadow.current = articleHostRef.current.attachShadow({ mode: "open" });
       }
+      console.log(shadow.current,articleHostRef.current)
   })
 
   return (<div className='w-screen md:w-7/10 overflow-auto'>
@@ -31,8 +30,7 @@ export default function OpenTabsTable({
           articleHostRef={articleHostRef}
           tabs={tabs}
           readerUrl={readerUrl}
-          setReaderUrl={setReaderUrl}
-          setIsMinimized={setIsMinimized} />
+          />
       </tbody>
     </table>
   </div>)

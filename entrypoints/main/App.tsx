@@ -6,11 +6,12 @@ import {
 import { useTabStore } from '@/hooks/useTabStore';
 import { toastStore } from './ToastStore';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { LocalStorageContext, ShadowContext } from '@/contexts';
+import { LocalStorageContext, ReaderContext, ShadowContext, UseReaderContext } from '@/contexts';
 import ToolbarTop from '@/components/ToolbarTop';
 import Reader from './Reader';
 import ClosedTabsTable from '@/components/ClosedTabsTable';
 import OpenTabsTable from '@/components/OpenTabsTable';
+import { readerReducer } from '@/reducers';
 
 const defaultStructuredWork = {
   author: '',
@@ -19,8 +20,9 @@ const defaultStructuredWork = {
 }
 const defaultCursor = { sIdx: 0, pIdx: 0, cIdx: 0 }
 
+
 /* ========== APP ========== */
-export default function App() {
+function App() {
   const structuredWork = useRef(defaultStructuredWork);
   console.log('=================== App didMount ===================')
   console.log(import.meta.env)
@@ -30,10 +32,12 @@ export default function App() {
   console.log('App prelocalStorage')
   const [localStorage, setLocalStorage] = useLocalStorage()
   /* STATE */
-  const [readerUrl, setReaderUrl] = useState('');
-  const [isMinimized, setIsMinimized] = useState(true);
-  const [isPaused, togglePaused] = useState(true)
+  let setMinimized, setReaderUrl;
+  const {readerState }= useContext(ReaderContext)
+  const { paragraphUrl, isMinimized }  = readerState
 
+  const [isPaused, togglePaused] = useState(true)
+console.log('APPPP readerState', readerState)
   /* ========== TOASTS ========== */
   /* TODO create custom hook */
   const toasts = useSyncExternalStore(
@@ -52,9 +56,9 @@ export default function App() {
     console.log('handleClickMinimize', isMinimized)
     if (!isPaused) togglePaused(isPaused => true)
     if (!isMinimized) {
-      setIsMinimized(true);
+      setMinimized(true);
     } else {
-      setIsMinimized(false);
+      setMinimized(false);
     }
   };
 
@@ -75,31 +79,29 @@ export default function App() {
         flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
     <LocalStorageContext value={{ localStorage, setLocalStorage }}>
       <ShadowContext value={{ range, shadow, leavesRef, leafLengthsRef, leafEndsRef }}>
-        <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage} />
+          <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage} />
 
-        <h2 className='text-lg text-semibold'>Open Tabs</h2>
-        {tabs.every(tab => tab.status === 'complete') ? <OpenTabsTable
-          tabs={tabs}
-          readerUrl={readerUrl}
-          setReaderUrl={setReaderUrl}
-          setIsMinimized={setIsMinimized} />
-          : null}
+          <h2 className='text-lg text-semibold'>Open Tabs</h2>
+          {tabs.every(tab => tab.status === 'complete') ? <OpenTabsTable
+            tabs={tabs}
+            readerUrl={paragraphUrl}
+            />
+            : null}
 
-        <h2 className='text-lg text-semibold'>Previous Tabs</h2>
-        <ClosedTabsTable tabs={tabs} localStorage={localStorage} />
+          <h2 className='text-lg text-semibold'>Previous Tabs</h2>
+          <ClosedTabsTable tabs={tabs} localStorage={localStorage} />
 
-        {(!(readerUrl && structuredWork) ? null : (
-          <Reader
-            localStorage={localStorage[readerUrl] || defaultCursor}
-            paragraphUrl={readerUrl}
-            structuredWork={structuredWork.current}
-            isPaused={isPaused} togglePaused={togglePaused}
-            handleClickMinimize={handleClickMinimize}
-            isMinimized={isMinimized}
-            setIsMinimized={setIsMinimized}
-            addToast={toastStore.addToast}
-          />))}
+          {(!(paragraphUrl&& structuredWork) ? null : (
+            <Reader
+              localStorage={localStorage[paragraphUrl] || defaultCursor}
+              structuredWork={structuredWork.current}
+              isPaused={isPaused} togglePaused={togglePaused}
+              handleClickMinimize={handleClickMinimize}
+              addToast={toastStore.addToast}
+            />))}
       </ShadowContext>
     </LocalStorageContext>
   </div>)
 }
+
+export default  ({}) =>(<UseReaderContext ><App /> </UseReaderContext>)

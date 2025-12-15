@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { ShadowContext } from "@/contexts";
+import { ShadowContext, ReaderContext } from "@/contexts";
 
 import {
   OpenTabTableCell,
@@ -18,12 +18,12 @@ const parser = new DOMParser()
 
 export default function OpenTabList({
   tabs,
-  readerUrl, setReaderUrl,
-  setIsMinimized,
+  readerUrl,
   articleHostRef,
 }) {
 
   const { shadow } = useContext(ShadowContext)
+  const { readerState, setReaderUrl, setMinimized } = useContext(ReaderContext)
 
   const sendMessageToTab = useCallback(async tabId => {
     const tabResponse = await browser.tabs.sendMessage(tabId, {
@@ -45,9 +45,10 @@ export default function OpenTabList({
         .cloneNode(true));
     }
     setReaderUrl(targetTab.url)
-    setIsMinimized(false);
+    setMinimized(false);
 
   }, [tabs, setReaderUrl])
+    console.log(readerState, setReaderUrl)
 
   /*
    * useEffect opens Reader to tabId from Popup's search param
@@ -94,7 +95,7 @@ export default function OpenTabList({
           <ReadButton
             readerUrl={readerUrl}
             sendMessageToTab={sendMessageToTab}
-            setIsMinimized={setIsMinimized}
+            setIsMinimized={setMinimized}
             tab={t} />
         </OpenTabTableCell>
       </tr>

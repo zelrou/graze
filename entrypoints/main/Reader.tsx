@@ -3,7 +3,7 @@ import {
     memo, useMemo, useRef, useCallback,
     createElement
 } from 'react';
-import { LocalStorageContext, SetLocationContext, ShadowContext } from '@/contexts';
+import { LocalStorageContext, SetLocationContext, ShadowContext, ReaderContext } from '@/contexts';
 import { SearchContainer } from '@/features/search';
 
 const DEFAULTS = {};
@@ -182,10 +182,9 @@ function RenderMain({charIndex, charInterval}){
 }
 
 export default function Reader({
-    paragraphUrl,
     structuredWork,
     localStorage,
-    handleClickMinimize, isMinimized, setIsMinimized,
+    handleClickMinimize,
     isPaused, togglePaused,
     addToast
 }) {
@@ -201,10 +200,13 @@ export default function Reader({
         setLocalStorage
     } = useContext(LocalStorageContext)
 
+    const {readerState, setMinimized, setReaderUrl, setCharIndex} = useContext(ReaderContext)
+    const {paragraphUrl, isMinimized, charIndex} = readerState
+    
+    console.log(readerState, setMinimized)
     console.log('================= Reader ===================')
     const [partIndex, setPartIndex] = useState(0);
     const [paragraphIndex, setParagraphIndex] = useState(0);
-    const [charIndex, setCharIndex] = useState(0);
     const [charInterval, setCharInterval] = useState(200);
     const defaultFontSize = (window.innerWidth < 641) ? 1 : 1.5;
     const [fontSize, setFontSize] = useState(defaultFontSize);
