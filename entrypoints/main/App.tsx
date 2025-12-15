@@ -32,8 +32,8 @@ function App() {
   console.log('App prelocalStorage')
   const [localStorage, setLocalStorage] = useLocalStorage()
   /* STATE */
-  let setMinimized, setReaderUrl;
-  const {readerState }= useContext(ReaderContext)
+  let setReaderUrl;
+  const {readerState, setMinimized }= useContext(ReaderContext)
   const { paragraphUrl, isMinimized }  = readerState
 
   const [isPaused, togglePaused] = useState(true)

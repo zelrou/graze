@@ -167,7 +167,7 @@ const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePau
     </form></div>)
 }
 
-function RenderMain({charIndex, charInterval}){
+function RenderMain({charIndex, charInterval, paragraphUrl}){
     const { range } = useContext(ShadowContext)
     const mainTextRef = useRef(null)
 
@@ -176,7 +176,7 @@ function RenderMain({charIndex, charInterval}){
             mainTextRef.current.replaceChildren(
                 surroundRange(range.current))
         }
-    }, [charIndex, charInterval])
+    }, [charIndex, charInterval, paragraphUrl])
 
     return(<div ref={mainTextRef}></div>)
 }
@@ -247,12 +247,13 @@ export default function Reader({
             // leafRange.setStart(leavesRef.current[0], 0)
             // leafRange.setEnd(leavesRef.current[endIdx], endOffset)
             range.current = leafRange
+            console.log(range)
             setCharIndex(0)
         }
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
         setLocation(0)
-        // setIsMinimized(false);
+        // setMinimized(false);
         setIsOpenSearchContainer(false);
         // isCursorAtEnd = false;
     } else {
@@ -623,6 +624,7 @@ export default function Reader({
                         <h3 className='mb-8'>{ heading }</h3>
                         <div style={{ fontSize: `${fontSize}rem`}} className={classesMainText}>
                             <RenderMain
+                                paragraphUrl={paragraphUrl}
                                 charInterval={charInterval}
                                 charIndex={charIndex} />
                         </div>
