@@ -45,6 +45,7 @@ export default function OpenTabList({
         .cloneNode(true));
     }
     setReaderUrl(targetTab.url)
+    setIsMinimized(false);
 
   }, [tabs, setReaderUrl])
 

@@ -250,7 +250,7 @@ export default function Reader({
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
         setLocation(0)
-        setIsMinimized(false);
+        // setIsMinimized(false);
         setIsOpenSearchContainer(false);
         // isCursorAtEnd = false;
     } else {
