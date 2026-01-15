@@ -21,14 +21,16 @@ export default defineContentScript({
     } catch (e) {
       console.error(e);
     }
-    browser.runtime.onMessage.addListener((request) => {
+    browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log("Message from the background script:");
         console.log(request.greeting);
         const article = sanitzeAndReaderize(document)
-        return Promise.resolve({
+        console.log('safeArticle', article)
+        sendResponse ({
             response: "Hi from content script",
             article
         });
+        return true
     });
   },
 });
