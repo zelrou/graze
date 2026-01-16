@@ -3,8 +3,12 @@
 import { test as base, chromium, type BrowserContext } from "@playwright/test";
 import path from "path";
 
-const outputPath = ".output/chrome-mv3"
+const outputPath = process.env.DEV
+  ? ".output/chrome-mv3-dev"
+  : '.output/chrome-mv3'
+
 const pathToExtension = path.resolve(outputPath);
+console.log('testing dir:', pathToExtension)
 
 export const test = base.extend<{
   context: BrowserContext;
@@ -26,7 +30,8 @@ export const test = base.extend<{
   extensionId: async ({ context }, use) => {
     let background: { url(): string };
 
-    if (pathToExtension.endsWith("-mv3")) {
+    if (pathToExtension.endsWith("-mv3")
+      || pathToExtension.endsWith("-mv3-dev")) {
       [background] = context.serviceWorkers();
       if (!background)
         background = await context.waitForEvent("serviceworker");

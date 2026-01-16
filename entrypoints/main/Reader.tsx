@@ -178,7 +178,7 @@ function RenderMain({charIndex, charInterval, paragraphUrl}){
         }
     }, [charIndex, charInterval, paragraphUrl])
 
-    return(<div ref={mainTextRef}></div>)
+    return(<div id='mainTextContainer' ref={mainTextRef}></div>)
 }
 
 export default function Reader({

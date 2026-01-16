@@ -1,16 +1,7 @@
 import { sanitzeAndReaderize } from "@/utils/xpathUtils.tsx"
 
-
-
-/*
-let paragraphNodes = document.getElementsByTagName('p')
-let _paragraphs = Array.from(paragraphNodes).map((el)=>{
-    return el.innerText
-});
-*/
-
-
-
+import { browser } from 'wxt/browser';
+import { type Browser } from 'wxt/browser';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -22,11 +13,16 @@ export default defineContentScript({
       console.error(e);
     }
     browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        console.log("Message from the background script:");
-        console.log(request.greeting);
-        const article = sanitzeAndReaderize(document)
+        console.log("Message from the background script:", request.greeting);
+        let article;
+        try {
+          article = sanitzeAndReaderize(globalThis.document)
+        } catch(e){
+          console.err(e)
+          throw(e)
+        }
         console.log('safeArticle', article)
-        sendResponse ({
+        sendResponse({
             response: "Hi from content script",
             article
         });

@@ -19,10 +19,9 @@ const parser = new DOMParser()
 export default function OpenTabList({
   tabs,
   readerUrl,
-  articleHostRef,
-}) {
+  }) {
 
-  const { shadow } = useContext(ShadowContext)
+  const { shadow, articleHostRef } = useContext(ShadowContext)
   const { readerState, setReaderUrl, setMinimized } = useContext(ReaderContext)
 
   const sendMessageToTab = useCallback(async tabId => {
@@ -30,6 +29,10 @@ export default function OpenTabList({
       greeting: "Hi from background script",
     })
     console.log("Message from the content script:", tabResponse);
+    if (tabResponse === undefined) {
+      console.error('tabResponse undefined')
+      return null
+    }
     const { article } = tabResponse;
     const articleDOM = parser.parseFromString(article.content, "text/html");
     const targetTab = tabs.filter(t => t.id === tabId)[0];
@@ -38,7 +41,8 @@ export default function OpenTabList({
       void (0);
 
       // initialize shadow dom
-    } else if (shadow.current !== null) {
+    } else if ((shadow.current !== null)
+      && (articleHostRef.current !== null)) {
       // && shadow.current.childNodes.length === 0) {
       shadow.current = articleHostRef.current.shadowRoot
       shadow.current.replaceChildren(articleDOM.getElementById('readability-page-1')

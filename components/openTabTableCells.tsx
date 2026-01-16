@@ -64,6 +64,7 @@ export const ReadButton = ({
     }) => {
 
     const defaultClassName = [
+        `btn-readero`,
         `w-full p-1 flex flex-row`,
         `outline-2 outline-zinc-300/50`,
         `text-center justify-center`,
@@ -71,14 +72,17 @@ export const ReadButton = ({
         `hover:bg-emerald-500/50`
     ].join(' ')
 
-    const handleClickRead = () => (
-        readerUrl === tab.url
+    const handleClickRead = async () => {
+        return (readerUrl === tab.url
             ? setIsMinimized(false)
             : sendMessageToTab(tab.id))
-
+    }
 
     return (
         <button
+            type='button'
+            name='read'
+            aria-label='read'
             className={ defaultClassName }
             disabled={ tab.discarded }
             onClick={ handleClickRead }>

@@ -8,6 +8,7 @@ import { toastStore } from './ToastStore';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { LocalStorageContext, ReaderContext, ShadowContext, UseReaderContext } from '@/contexts';
 import ToolbarTop from '@/components/ToolbarTop';
+import { ArticleHost } from '@/components/ArticleHost'; 
 import Reader from './Reader';
 import ClosedTabsTable from '@/components/ClosedTabsTable';
 import OpenTabsTable from '@/components/OpenTabsTable';
@@ -37,7 +38,7 @@ function App() {
   const { paragraphUrl, isMinimized }  = readerState
 
   const [isPaused, togglePaused] = useState(true)
-console.log('APPPP readerState', readerState)
+  console.log('App readerState', readerState)
   /* ========== TOASTS ========== */
   /* TODO create custom hook */
   const toasts = useSyncExternalStore(
@@ -69,7 +70,7 @@ console.log('APPPP readerState', readerState)
   const leavesRef = useRef(null);
   const leafLengthsRef = useRef(null);
   const leafEndsRef = useRef(null);
-
+  const articleHostRef = useRef(null)
 
   const tabStatus = tabs.map(tab => ({ url: tab.url, status: tab.status }))
   // console.log(tabStatus)
@@ -78,9 +79,9 @@ console.log('APPPP readerState', readerState)
   return (<div className={`relative w-screen min-h-screen h-full flex
         flex-col space-y-4 items-center pb-20 bg-zinc-950 text-zinc-200`}>
     <LocalStorageContext value={{ localStorage, setLocalStorage }}>
-      <ShadowContext value={{ range, shadow, leavesRef, leafLengthsRef, leafEndsRef }}>
+      <ShadowContext value={{ range, shadow, leavesRef, leafLengthsRef, leafEndsRef, articleHostRef }}>
           <ToolbarTop setMsg={setMsg} localStorage={localStorage} setLocalStorage={setLocalStorage} />
-
+          <ArticleHost />
           <h2 className='text-lg text-semibold'>Open Tabs</h2>
           {tabs.every(tab => tab.status === 'complete') ? <OpenTabsTable
             tabs={tabs}

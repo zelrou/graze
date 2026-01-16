@@ -6,7 +6,8 @@ import { useState, useEffect } from "react";
 export const denylistProtocol = [
     'graze',
     'about:',
-    'moz-extension:'
+    'moz-extension:',
+    'chrome-extension:'
 ]
 
 export const isInDenylist = (s:string) => {
@@ -73,8 +74,8 @@ export const useTabStore = () => {
             'status',
             'discarded'
         ]}
-
-        browser.tabs.onUpdated.addListener(handleUpdated, updateFilters)
+        // TODO re-add firefox update filters? or use wxt global?
+        browser.tabs.onUpdated.addListener(handleUpdated)
         browser.tabs.onRemoved.addListener(handleRemoved)
         return () => {
             browser.tabs.onUpdated.removeListener(handleUpdated)

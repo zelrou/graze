@@ -332,6 +332,7 @@ export function sanitzeAndReaderize(node: WindowLike, RETURN_DOM = false):
   Readability | undefined {
   //TODO! pass readerable clean? 
   let article;
+  // TODO handle not readerable
   if (isProbablyReaderable(document)) {
     // const documentClone = document.cloneNode(node);
     const [clean,ns] = cleanNode(node)
