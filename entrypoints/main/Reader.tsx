@@ -253,9 +253,12 @@ export default function Reader({
         console.log('READER: resetting location')
         prevParagraphUrl.current = paragraphUrl;
         setLocation(0)
-        // setMinimized(false);
+        /* setMinimized(false);
+         * here causes a render loop, this combination with click handler just
+         * works
+        */
         setIsOpenSearchContainer(false);
-        // isCursorAtEnd = false;
+
     } else {
         console.log('READER same url', paragraphUrl, prevParagraphUrl.current)//, structuredWork)
         // partLength = structuredWork.parts.length
@@ -264,8 +267,6 @@ export default function Reader({
         // currentParagraph = currentPart.paragraphs[paragraphIndex]
         // charLength = currentParagraph.charLength
         // heading = currentPart.heading
-        /* TODO: implement isCursorAtEnd? */
-        // isCursorAtEnd = false;
 
         // const totalLength = leafEndsRef.current.at(-1)
 
@@ -287,8 +288,6 @@ export default function Reader({
     }
 
     /* ========== SEEKING ========== */
-    /* TODO structuredWork class
-     * make seeking into instance methods returning location for set state */
     const getPrevMainText = () => {
         console.log('getPrevMainText', charIndex)
         let startCharIndex = charIndex - charInterval;
@@ -455,7 +454,6 @@ export default function Reader({
 
     const handleClickClearBookmarks = async (e) => {
         e.preventDefault()
-        /* TODO add confirm dialog */
         await setLocalStorage({
             [paragraphUrl]: { sIdx: 0, pIdx: 0, cIdx: 0 }
         })
@@ -473,7 +471,6 @@ export default function Reader({
     }
 
     /* ========== TOOLBAR BOTTOM RESPONSIVE MINIMIZE/MAXIMIZE ========== */
-    /* TODO USE CSS CLASS FOR BREAKPOINT INSTEAD OF window.innerWidth */
     const toolbarBottomRef = useRef(null)
     const defaultToolbarBottomState = window.innerWidth < 641;
     const [toolbarBottomIsMinimized, setToolbarBottomIsMinimized] = useState(defaultToolbarBottomState)
@@ -711,13 +708,12 @@ export default function Reader({
                             dark:text-gray-200
                             ${!toolbarBottomIsMinimized && defaultToolbarBottomState ? 'hidden' : ''}
                             `}
-                            onClick={handleClickPause}> {/* TODO */}
+                            onClick={handleClickPause}>
                             {isPaused ? svgPlay : svgPause }</button>
                     </div>
 
                     <div className={`${toolbarBottomIsMinimized?'hidden':''} contents`}>
                         {/* Location Form */}
-                        {/* TODO Update Location Context w these props */}
                         <SetLocationContext value={{setLocation}}>
                             <LocationForm
                                 structuredWork={structuredWork}
