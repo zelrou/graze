@@ -22,6 +22,7 @@ export default defineContentScript({
           throw(e)
         }
         console.log('safeArticle', article)
+        article = article ?? {content: null}
         sendResponse({
             response: "Hi from content script",
             article
