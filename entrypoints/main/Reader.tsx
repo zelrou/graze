@@ -612,6 +612,8 @@ export default function Reader({
 
                     {/* SEEK LEFT BUTTON */}
                     <button className='flex-shrink bg-zinc-700/50 self-start self-stretch flex flex-col justify-around align-center'
+                        role='button'
+                        name='nav-prev'
                         onClick={getPrevMainText}>
                         {svgChevronLeft}</button>
 

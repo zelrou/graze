@@ -25,9 +25,14 @@ export async function openMain(page: Page, extensionId: string) {
       getReaderMainTextDiv: async () => page.locator('#mainTextContainer'),
       getReaderRoot: async () => page.locator('#reader-modal-root'),
       getReaderNavNextButton: async () => page.locator('button[name="nav-next"]'),
+      getReaderNavPrevButton: async () => page.locator('button[name="nav-prev"]'),
       clickReaderNavNextButton: async () => {
         const nextButton = await mainPage.getReaderNavNextButton()
         await nextButton.click()
+      },
+      clickReaderNavPrevButton: async () => {
+        const prevButton = await mainPage.getReaderNavPrevButton()
+        await prevButton.click()
       }
   }
   return mainPage

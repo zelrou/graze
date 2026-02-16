@@ -77,4 +77,9 @@ test("reader nav controls location", async ({ page, extensionId, context }) => {
   const mainText2 = await mainTextDiv.textContent()
 
   expect(mainText1 === mainText2).toBeFalsy()
+
+  await mainPage.clickReaderNavPrevButton()
+  const mainText3 = await mainTextDiv.textContent()
+
+  expect(mainText3 === mainText1).toBeTruthy()
 });
