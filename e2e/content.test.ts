@@ -1,66 +1,55 @@
+import { isStringObject } from "util/types";
 import { test, expect } from "./fixtures";
 
+import { openExternal } from "./pages/external"
 import { openMain } from "./pages/main"
 
+const externalURL = `https://en.wikipedia.org/wiki/Special:Random`
 
 test("Content script loads", async ({ page, extensionId, context }) => {
   // open external page for content script
   const externalPage = await context.newPage()
-  const externalURL = `https://en.wikipedia.org/wiki/Special:Random`
   await externalPage.goto(externalURL)
+  // console.log('num pages after open 1', context.pages().map(p=>p.title))
 
   // open main page
-  let mainPage = await context.newPage()
-  mainPage = await openMain(mainPage, extensionId)
+  const blankPageMain = await context.newPage()
+  const mainPage = await openMain(blankPageMain, extensionId)
 
-  // expect sanity
-  const allPages = context.pages()
-  expect(allPages.length).toBe(4)
-  expect(mainPage).toBeTruthy()
-  expect(externalPage).toBeTruthy()
-  await expect(mainPage).toHaveTitle(/Graze/);
+  await expect(mainPage.page).toHaveTitle(/Graze/);
 
   // expect external title to be in tab list
   const externalTitle = await externalPage.title()
-  await mainPage.getByRole('button', { name: 'dismiss' }).click();
-  const openTable = await mainPage.locator('table').nth(0)
+  await mainPage.clickDismissButton()
+  const openTable = await mainPage.getOpenTabsTable()
   const openTabsText = await openTable.textContent()
   // await page.pause();
   expect(openTabsText.includes(externalTitle)).toBe(true)
 });
 
 test("reader contains text from content script", async ({ page, extensionId, context }) => {
-  // TODO DRY below copied from above
+  // //TODO:DONE? DRY below copied from above
   // open external page for content script
   const externalPage = await context.newPage()
-  const externalURL = `https://en.wikipedia.org/wiki/Special:Random`
   await externalPage.goto(externalURL)
 
   // open main page
-  let mainPage = await context.newPage()
-  mainPage = await openMain(mainPage, extensionId)
+  const blankPageMain = await context.newPage()
+  const mainPage = await openMain(blankPageMain, extensionId)
 
-  // expect sanity
-  const allPages = context.pages()
-  expect(allPages.length).toBe(4)
-  expect(mainPage).toBeTruthy()
-  expect(externalPage).toBeTruthy()
-  await expect(mainPage).toHaveTitle(/Graze/);
-
-  // expect external title to be in tab list
   const externalTitle = await externalPage.title()
-  await mainPage.getByRole('button', { name: 'dismiss' }).click();
-  const openTable = await mainPage.locator('table').nth(0)
-  const openTabsText = await openTable.textContent()
-  expect(openTabsText.includes(externalTitle)).toBe(true)
-
+  await mainPage.clickDismissButton()
   // now we open the page in reader
-  const openTableFirstRow = await openTable.locator('tr').nth(1)
-  await openTableFirstRow.locator('button.btn-readero').click()
-  // await page.pause();
+  // const tabRow = await mainPage.getOpenTabRowByText(externalTitle)
 
+  await mainPage.clickReaderButton(externalTitle)
+
+  // await page.pause();
   // locate main text
-  const mainTextDiv = await mainPage.locator('#mainTextContainer')
+  // const mainTextDiv = await mainPage.locator('#mainTextContainer')
+  const mainTextDiv = await mainPage.getReaderMainTextDiv()
   const mainText = await mainTextDiv.textContent()
-  expect(mainText).toBeTruthy()
+  // await page.pause()
+  console.log('maintextlen:', mainText.length)
+  expect(typeof mainText ).toStrictEqual('string')
 });

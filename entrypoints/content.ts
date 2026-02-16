@@ -22,7 +22,12 @@ export default defineContentScript({
           throw(e)
         }
         console.log('safeArticle', article)
-        article = article ?? {content: null}
+        article = article ?? {
+          content: `
+              <div id="readability-page-1" >
+                  <div>not enough content</div></div>`
+
+        }
         sendResponse({
             response: "Hi from content script",
             article

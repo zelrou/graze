@@ -16,6 +16,10 @@ import {
 
 const parser = new DOMParser()
 
+const getTabsById = (tabs, tabId) => {
+    return tabs.filter(t => t.id === tabId)[0];
+}
+export const readabilityId = 'readability-page-1'
 export default function OpenTabList({
   tabs,
   readerUrl,
@@ -34,8 +38,13 @@ export default function OpenTabList({
       return null
     }
     const { article } = tabResponse;
-    const articleDOM = parser.parseFromString(article.content, "text/html");
-    const targetTab = tabs.filter(t => t.id === tabId)[0];
+    let articleDOM;
+    const articleDOMTemplate = {content:'', childNodes:''};
+    if (article.content?.length) {
+      articleDOM = parser.parseFromString(article.content, "text/html");
+    }
+    if (! articleDOM) articleDOM = articleDOMTemplate;
+    const targetTab = getTabsById(tabs, tabId)
     if (articleDOM.childNodes.length === 0) {
       console.debug('empty article', articleDOM)
       void (0);
@@ -45,7 +54,7 @@ export default function OpenTabList({
       && (articleHostRef.current !== null)) {
       // && shadow.current.childNodes.length === 0) {
       shadow.current = articleHostRef.current.shadowRoot
-      shadow.current.replaceChildren(articleDOM.getElementById('readability-page-1')
+      shadow.current.replaceChildren(articleDOM.getElementById(readabilityId)
         .cloneNode(true));
     }
     setReaderUrl(targetTab.url)
