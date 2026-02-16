@@ -22,7 +22,13 @@ export async function openMain(page: Page, extensionId: string) {
         // await openTabsTable.getByRole('row').filter({hasText: externalTitle})
         page.locator('button.btn-readero').click()
       },
-      getReaderMainTextDiv: async () => page.locator('#mainTextContainer')
+      getReaderMainTextDiv: async () => page.locator('#mainTextContainer'),
+      getReaderRoot: async () => page.locator('#reader-modal-root'),
+      getReaderNavNextButton: async () => page.locator('button[name="nav-next"]'),
+      clickReaderNavNextButton: async () => {
+        const nextButton = await mainPage.getReaderNavNextButton()
+        await nextButton.click()
+      }
   }
   return mainPage
 }

@@ -5,7 +5,7 @@ import { openExternal } from "./pages/external"
 import { openMain } from "./pages/main"
 
 const externalURL = `https://en.wikipedia.org/wiki/Special:Random`
-
+const externalStaticURL = `https://en.wikipedia.org/wiki/ECMAScript`
 test("Content script loads", async ({ page, extensionId, context }) => {
   // open external page for content script
   const externalPage = await context.newPage()
@@ -52,4 +52,29 @@ test("reader contains text from content script", async ({ page, extensionId, con
   // await page.pause()
   console.log('maintextlen:', mainText.length)
   expect(typeof mainText ).toStrictEqual('string')
+});
+
+test("reader nav controls location", async ({ page, extensionId, context }) => {
+  // open external page for content script
+  const externalPage = await context.newPage()
+  await externalPage.goto(externalStaticURL)
+
+  // open main page
+  const blankPageMain = await context.newPage()
+  const mainPage = await openMain(blankPageMain, extensionId)
+
+  const externalTitle = await externalPage.title()
+  await mainPage.clickDismissButton()
+
+  // now we open the page in reader
+  await mainPage.clickReaderButton(externalTitle)
+
+  const  mainTextDiv = await mainPage.getReaderMainTextDiv()
+  const mainText1 = await mainTextDiv.textContent()
+
+  await mainPage.clickReaderNavNextButton()
+
+  const mainText2 = await mainTextDiv.textContent()
+
+  expect(mainText1 === mainText2).toBeFalsy()
 });

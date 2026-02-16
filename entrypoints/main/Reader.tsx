@@ -653,6 +653,8 @@ export default function Reader({
 
                     {/* SEEK RIGHT BUTTON */}
                     <button className='flex-shrink bg-zinc-700/50 flex flex-col justify-around align-center'
+                        role='button'
+                        name='nav-next'
                         onClick={getNextMainText}>
                         {svgChevronRight}</button>
 
