@@ -82,8 +82,27 @@ export async function openMain(page: Page, extensionId: string) {
       fillCharIntervalInput: async (charInterval) => {
         const charIntervalInput = await mainPage.getCharIntervalInput()
         await charIntervalInput.fill(`${charInterval}`)
+      },
+      getMainTextSlice: async (textSlice) => {
+        const mainTextDiv = page
+          .locator('#mainTextContainer')
+          .getByText(textSlice)
+        return mainTextDiv
+      },
+      getFontSize: async (textLocator) => {
+        const size = await textLocator.evaluate((el, [])=> {
+          const style = getComputedStyle(el, null)
+            .getPropertyValue('font-size');
+          const fontSize = parseFloat(style)
+          return fontSize
+        },[])
+        return size
+      },
+      fillFontSizeInput: async (newSize) => {
+        const fontSizeInput = await page.locator('input[name="fontSizeInput"]')
+        await fontSizeInput.fill(`${newSize}`)
       }
-}
+  }
   return mainPage
 }
 

@@ -116,7 +116,20 @@ test.describe('content script and dependent features', () => {
       expect(mainTextLen2).toStrictEqual(newCharInterval)
     });
 
-    test('mainText fontSize', async ({})=>{});
+    test('mainText fontSize', async ({})=>{
+      const newFontSize = 3;
+      const matchTextSlice = 'From Wikipedia, the free'
+      const externalTitle = await externalPage.title()
+      await mainPage.clickReaderButton(externalTitle)
+
+      const textSlice = await mainPage.getMainTextSlice(matchTextSlice)
+      const fontSizeA = await mainPage.getFontSize(textSlice)
+
+      await mainPage.fillFontSizeInput(newFontSize)
+
+      const fontSizeB = await mainPage.getFontSize(textSlice)
+      expect(fontSizeA).toBeLessThan(fontSizeB)
+    });
   });
 })
 
