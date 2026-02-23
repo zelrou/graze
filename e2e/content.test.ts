@@ -4,82 +4,91 @@ import { test, expect } from "./fixtures";
 import { openExternal } from "./pages/external"
 import { openMain } from "./pages/main"
 
-const externalURL = `https://en.wikipedia.org/wiki/Special:Random`
-const externalStaticURL = `https://en.wikipedia.org/wiki/ECMAScript`
-test("Content script loads", async ({ page, extensionId, context }) => {
-  // open external page for content script
-  const externalPage = await context.newPage()
-  await externalPage.goto(externalURL)
-  // console.log('num pages after open 1', context.pages().map(p=>p.title))
 
-  // open main page
-  const blankPageMain = await context.newPage()
-  const mainPage = await openMain(blankPageMain, extensionId)
+const baseUrl = `http://localhost:8080/`
+// const baseUrl = `https://wikipedia.com/wiki/`
 
-  await expect(mainPage.page).toHaveTitle(/Graze/);
+const externalURL1 = `${baseUrl}TypeScript%20-%20Wikipedia.html`
+const externalURL2 = `${baseUrl}ECMAScript%20-%20Wikipedia.html`
 
-  // expect external title to be in tab list
-  const externalTitle = await externalPage.title()
-  await mainPage.clickDismissButton()
-  const openTable = await mainPage.getOpenTabsTable()
-  const openTabsText = await openTable.textContent()
-  // await page.pause();
-  expect(openTabsText.includes(externalTitle)).toBe(true)
-});
+test.describe('content script and dependent features', () => {
 
-test("reader contains text from content script", async ({ page, extensionId, context }) => {
-  // //TODO:DONE? DRY below copied from above
-  // open external page for content script
-  const externalPage = await context.newPage()
-  await externalPage.goto(externalURL)
+  let externalPage, externalPage2, mainPage;
+  test.beforeEach(async ({ page, extensionId, context }) => {
+    // open external pages for content script
+    externalPage = await context.newPage()
+    await externalPage.goto(externalURL1)
+    externalPage2 = await context.newPage()
+    await externalPage2.goto(externalURL2)
+    // open main page
+    const blankMain = await context.newPage()
+    mainPage = await openMain(blankMain, extensionId)
+    await mainPage.clickDismissButton()
+  })
 
-  // open main page
-  const blankPageMain = await context.newPage()
-  const mainPage = await openMain(blankPageMain, extensionId)
+  // TODO we are checking by proxy maybe chech external console or mach
+  test("Content script appears in open tabs list", async ({ page, extensionId, context }) => {
+    const externalTitle = await externalPage.title()
+    const openTable = await mainPage.getOpenTabsTable()
+    const openTabsText = await openTable.textContent()
+    expect(openTabsText.includes(externalTitle)).toBe(true)
+  });
 
-  const externalTitle = await externalPage.title()
-  await mainPage.clickDismissButton()
-  // now we open the page in reader
-  // const tabRow = await mainPage.getOpenTabRowByText(externalTitle)
+  test("reader contains string from content script", async ({ page, extensionId, context }) => {
+    const matchCase1 = 'TypeScript'
+    const externalTitle = await externalPage.title()
+    await mainPage.clickReaderButton(externalTitle)
 
-  await mainPage.clickReaderButton(externalTitle)
+    const mainTextDiv = await mainPage.getReaderMainTextDiv()
+    let mainText = await mainTextDiv.textContent()
+    expect(mainText.length).toBeGreaterThan(100)
+    expect(mainText).toContain(matchCase1)
+    /*
+    // TODO check against article 
+    const externalBody = await externalPage.locator('body').innerText()
+    for (const word of mainText) {
+      console.log(word)
+      expect(externalBody.includes(word)).toBeTruthy
+    }
+    */
+  });
 
-  // await page.pause();
-  // locate main text
-  // const mainTextDiv = await mainPage.locator('#mainTextContainer')
-  const mainTextDiv = await mainPage.getReaderMainTextDiv()
-  const mainText = await mainTextDiv.textContent()
-  // await page.pause()
-  console.log('maintextlen:', mainText.length)
-  expect(typeof mainText ).toStrictEqual('string')
-});
+  test("reader nav controls location", async ({ page, extensionId, context }) => {
+    const externalTitle = await externalPage.title()
+    await mainPage.clickReaderButton(externalTitle)
 
-test("reader nav controls location", async ({ page, extensionId, context }) => {
-  // open external page for content script
-  const externalPage = await context.newPage()
-  await externalPage.goto(externalStaticURL)
+    const mainTextDiv = await mainPage.getReaderMainTextDiv()
+    const mainText1 = await mainTextDiv.textContent()
 
-  // open main page
-  const blankPageMain = await context.newPage()
-  const mainPage = await openMain(blankPageMain, extensionId)
+    await mainPage.clickReaderNavNextButton()
 
-  const externalTitle = await externalPage.title()
-  await mainPage.clickDismissButton()
+    const mainText2 = await mainTextDiv.textContent()
 
-  // now we open the page in reader
-  await mainPage.clickReaderButton(externalTitle)
+    expect(mainText1 === mainText2).toBeFalsy()
 
-  const  mainTextDiv = await mainPage.getReaderMainTextDiv()
-  const mainText1 = await mainTextDiv.textContent()
+    await mainPage.clickReaderNavPrevButton()
+    const mainText3 = await mainTextDiv.textContent()
 
-  await mainPage.clickReaderNavNextButton()
+    expect(mainText3 === mainText1).toBeTruthy()
+  });
 
-  const mainText2 = await mainTextDiv.textContent()
+  test("reader changes location by charIndex", async ({ page, extensionId, context }) => {
+    const cIdx = 20;
+    const externalTitle = await externalPage.title()
+    await mainPage.clickReaderButton(externalTitle)
 
-  expect(mainText1 === mainText2).toBeFalsy()
+    const mainTextDiv = await mainPage.getReaderMainTextDiv()
+    const mainText1 = await mainTextDiv.textContent()
 
-  await mainPage.clickReaderNavPrevButton()
-  const mainText3 = await mainTextDiv.textContent()
+    await mainPage.fillReaderCharIndexInput(cIdx)
+    await mainPage.clickSubmitLocation()
 
-  expect(mainText3 === mainText1).toBeTruthy()
-});
+    const mainText2 = await mainTextDiv.textContent()
+    expect(mainText1 === mainText2).toBeFalsy()
+
+    const progressBar = await mainPage.getReaderProgressBar()
+    const progressText = await progressBar.textContent()
+    expect(progressText).toContain(`${cIdx}`)
+  });
+})
+

@@ -24,9 +24,6 @@ const svgChevronLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" view
 const svgMagnifyingGlass = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
 </svg>)
-const svgArrowTurnDownLeft = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="m7.49 12-3.75 3.75m0 0 3.75 3.75m-3.75-3.75h16.5V4.499" />
-</svg>)
 const svgPlay = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
   <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
 </svg>)
@@ -37,135 +34,6 @@ const svgCog6Tooth = (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBo
   <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
 </svg>)
-
-
-const LocationForm = ({structuredWork, paragraphUrl, sIdx, pIdx, cIdx, togglePaused}) => {
-    const { setLocation } = useContext(SetLocationContext)
-    const prevParagraphUrl = useRef(null)
-    const [prevSIdx, setPrevSIdx] = useState(null)
-    const [prevPIdx, setPrevPIdx] = useState(null)
-    const [prevCIdx, setPrevCIdx] = useState(null)
-    const [_sIdx, set_sIdx] = useState(0)
-    const [_pIdx, set_pIdx] = useState(0)
-    const [_cIdx, set_cIdx] = useState(0)
-
-    let partLength, paragraphLength, charLength;
-    const handleLocationChange = e => {
-        e.stopPropagation();
-        togglePaused(true);
-        console.log(e.target)
-        const inputVal = Number.parseInt(e.target.value)
-        if (!inputVal) return null
-        switch(e.target.name) {
-            case 'partIndexInput': {
-                const newVal = (((inputVal<partLength) && (inputVal>=0))
-                    ? inputVal : 0)
-                set_sIdx(newVal)
-                set_pIdx(0)
-                set_cIdx(0)
-                break
-            }
-            case 'paragraphIndexInput': {
-                const newVal = (((inputVal<paragraphLength) && (inputVal>=0))
-                    ? inputVal : 0)
-                set_pIdx(newVal)
-                set_cIdx(0)
-                break
-            }
-            case 'charIndexInput': {
-                const newVal = (((inputVal<charLength) && (inputVal>=0))
-                    ? inputVal : 0)
-                set_cIdx(newVal)
-                break
-            }
-            default:
-                break
-        }
-    }
-
-    const handleSubmitSettings = e => {
-        e.preventDefault();
-        e.stopPropagation();
-        const form = e.target;
-        const formData = new FormData(form);
-        console.log(formData);
-        const formJson = Object.fromEntries(formData)
-        const s = Number(formJson.partIndexInput)
-        const p = Number(formJson.paragraphIndexInput)
-        const c = Number(formJson.charIndexInput)
-        setLocation(c)
-    }
-
-    if (paragraphUrl !== prevParagraphUrl.current) {
-        console.log('url change')
-        prevParagraphUrl.current = paragraphUrl
-        set_sIdx(0)
-        set_pIdx(0)
-        set_cIdx(0)
-        partLength = structuredWork.parts.length
-        paragraphLength = structuredWork.parts[0].paragraphs.length
-        charLength = structuredWork.parts[0].paragraphs[0].length
-    } else if (paragraphUrl) {
-        console.log('same url')
-        if (prevSIdx !== sIdx) {
-            setPrevSIdx(sIdx)
-            set_sIdx(sIdx)
-        }
-        if (prevPIdx !== pIdx) {
-            setPrevPIdx(pIdx)
-            set_pIdx(pIdx)
-        }
-        if (prevCIdx !== cIdx) {
-            setPrevCIdx(cIdx)
-            set_cIdx(cIdx)
-        }
-        partLength = structuredWork.parts.length
-        paragraphLength =  structuredWork.parts[_sIdx].paragraphs.length
-        charLength = structuredWork.parts[_sIdx].paragraphs[_pIdx].length
-    }
-    const locationMatches = ((_cIdx === cIdx) && (_pIdx === pIdx) && (_sIdx === sIdx))
-
-    return (<div className='order-5 sm:order-4 w-full md:w-3/10 flex flex-col flex-grow-0 flex-shrink align-center justify-center'>
-        <form method="post" onSubmit={handleSubmitSettings}
-        className='flex-shrink flex-grow-0 flex gap-x-4 flex-row text-center sm:text-end justify-between sm:justify-center'>
-        <div className='contents'>
-            <label for='part'><span className='text-blue-300 font-semibold'>S:</span>
-                <input type='number' name='partIndexInput'
-                    className=''
-                    min='0' max={partLength-1}
-                    value={_sIdx}
-                    onChange={e=>handleLocationChange(e)} />
-
-            <span className='mr-2'>{ `/${partLength-1}` }</span>
-            </label>
-        </div>
-        <div className='contents'>
-            <label for='paragraph'><span className='text-green-300 font-semibold'>¶:</span>
-                <input type='number' name='paragraphIndexInput'
-                    className=''
-                    min='0' max={paragraphLength-1}
-                    value={_pIdx}
-                    onChange={e=>handleLocationChange(e)} />
-
-            <span className='mr-2'>{ `/${paragraphLength-1}` }</span>
-            </label>
-        </div>
-        <div className='contents'>
-            <label for='paragraph'><span className='text-red-300 font-semibold'>C:</span>
-                <input type='number' name='charIndexInput'
-                    className=''
-                    min='0' max={charLength-1}
-                    value={_cIdx}
-                    onChange={e=>handleLocationChange(e)} />
-
-                <span className='mr-2'>{ `/${charLength-1}` }</span>
-            </label>
-        </div>
-        <button disabled={locationMatches} type="submit"
-           className={locationMatches ? 'bg-zinc-500' : 'bg-indigo-500 hover bg-fuchsia-500'}>
-           {svgArrowTurnDownLeft}</button>
-    </form></div>)
-}
 
 function RenderMain({charIndex, charInterval, paragraphUrl}){
     const { range } = useContext(ShadowContext)
@@ -573,7 +441,6 @@ export default function Reader({
                         : ( <SearchContainer
                             charInterval={charInterval}
                             paragraphUrl={paragraphUrl}
-                            // structuredWork={structuredWork}
                             setIsOpenSearchContainer={setIsOpenSearchContainer}
                             /> ) }
                 </SetLocationContext>
@@ -635,21 +502,9 @@ export default function Reader({
                             <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
                                 <div className='bg-red-500/50'
                                     style={{width: `${charIndex/(totalLength-1)*100}%`}}></div>
-                                <span className='text-xs text-black fixed text-zinc-300'>
+                                <span className='progress-text text-xs text-black fixed text-zinc-300'>
                                     {`${charIndex}/${totalLength-1}`}</span>
                             </div>
-                            {/* <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
-                                <div className='bg-green-500/50'
-                                    style={{width: `${paragraphIndex/(paragraphLength-1)*100}%`}}></div>
-                                <span className='text-xs text-black fixed text-zinc-300'>
-                                    {`${paragraphIndex}/${paragraphLength-1}`}</span>
-                            </div>
-                            <div role='progressbar' className='basis-xs w-full flex flex-row static bg-zinc-700/50'>
-                                <div className='bg-blue-500/50'
-                                    style={{width: `${partIndex/(partLength-1)*100}%`}}></div>
-                                <span className='text-xs text-black fixed text-zinc-300'>
-                                    {`${partIndex}/${partLength-1}`}</span>
-                            </div> */}
                         </div>
                     </div>
 
@@ -720,10 +575,8 @@ export default function Reader({
                         {/* Location Form */}
                         <SetLocationContext value={{setLocation}}>
                             <LocationForm
-                                structuredWork={structuredWork}
+                                totalCharLength={totalLength}
                                 paragraphUrl={paragraphUrl}
-                                sIdx={partIndex}
-                                pIdx={paragraphIndex}
                                 cIdx={charIndex}
                                 togglePaused={togglePaused}
                             />

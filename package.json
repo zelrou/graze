@@ -11,6 +11,7 @@
     "test:dev": "vitest --ui --isolate=false --no-file-parallelism",
     "e2e": "playwright test --ui --workers=1",
     "e2e:dev": "DEV=true PWDEBUG=console DEBUG=pw:api playwright test --debug --workers=1",
+    "e2e:serve": "pnpx http-server e2e/html/",
     "build": "wxt build",
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",

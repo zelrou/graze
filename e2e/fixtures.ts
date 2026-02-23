@@ -2,8 +2,8 @@
 // https://github.com/wxt-dev/examples/blob/main/examples/playwright-e2e-testing/e2e/fixtures.ts
 import { test as base, chromium, type BrowserContext } from "@playwright/test";
 import path from "path";
-
-const outputPath = process.env.DEV
+const isDevEnv = process.env.DEV
+const outputPath = isDevEnv 
   ? ".output/chrome-mv3-dev"
   : '.output/chrome-mv3'
 
@@ -18,6 +18,7 @@ export const test = base.extend<{
     // https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context
     const context = await chromium.launchPersistentContext("", {
       headless: false,
+      slowMo:  isDevEnv ? 1000 : undefined,
       args: [
         `--disable-extensions-except=${pathToExtension}`,
         `--load-extension=${pathToExtension}`,
