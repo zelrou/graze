@@ -74,8 +74,16 @@ export async function openMain(page: Page, extensionId: string) {
       getReaderProgressBar: async () => {
         const mainUI = await mainPage.getMainTextWithUI()
         return mainUI.getByRole('progressbar')
+      },
+
+      getCharIntervalInput: async () => page
+        .locator('input[name="charIntervalInput"]'),
+
+      fillCharIntervalInput: async (charInterval) => {
+        const charIntervalInput = await mainPage.getCharIntervalInput()
+        await charIntervalInput.fill(`${charInterval}`)
       }
-  }
+}
   return mainPage
 }
 

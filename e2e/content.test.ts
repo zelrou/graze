@@ -95,7 +95,27 @@ test.describe('content script and dependent features', () => {
       const progressText = await progressBar.textContent()
       expect(progressText).toContain(`${cIdx}`)
     });
-    test('mainText charlength', async ({}) => {});
+
+    test('mainText charlength', async ({}) => {
+      const defaultCharInterval = 200;
+      const newCharInterval = 50;
+      const externalTitle = await externalPage.title()
+      await mainPage.clickReaderButton(externalTitle)
+
+      const mainTextDiv = await mainPage.getReaderMainTextDiv()
+      const mainText1 = await mainTextDiv.textContent()
+      const mainTextLen1 = mainText1.length
+      expect(mainTextLen1).toStrictEqual(defaultCharInterval)
+
+      await mainPage.fillCharIntervalInput(newCharInterval)
+
+      const mainText2 = await mainTextDiv.textContent()
+      const mainTextLen2 = mainText2.length
+
+      expect(mainText1).toContain(mainText2)
+      expect(mainTextLen2).toStrictEqual(newCharInterval)
+    });
+
     test('mainText fontSize', async ({})=>{});
   });
 })
