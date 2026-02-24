@@ -131,5 +131,34 @@ test.describe('content script and dependent features', () => {
       expect(fontSizeA).toBeLessThan(fontSizeB)
     });
   });
+
+
+  test.describe('autoseek', () => {
+    test('delayInput changes timeout and toggle advances mainText', async ({}) => {
+      const externalTitle = await externalPage.title()
+      await mainPage.clickReaderButton(externalTitle)
+
+      const mainTextDiv = await mainPage.getReaderMainTextDiv()
+      const mainText1 = await mainTextDiv.textContent()
+
+      const delayInput = await mainPage.getDelayInput()
+      const newDelay = 200
+      await delayInput.fill(`${newDelay}`)
+      // const delayInterval = await mainPage.getDelayInterval()
+
+      await mainPage.clickAutoseekToggle()
+      // await mainPage.page.clock.fastForward(delayInterval + 1000);
+    
+      const mainText2 = await mainTextDiv.textContent()
+      expect(mainText1 === mainText2).toBeFalsy()
+    })
+    test('autoseek stops at end of article', ({}) => {})
+
+  })
+
+  test.describe('toolbar top', () => {
+    test.describe('bookmarks', ()=>{})
+    test.describe('search', () => {})
+  })
 })
 

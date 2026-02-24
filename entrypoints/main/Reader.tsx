@@ -567,6 +567,7 @@ export default function Reader({
                             dark:text-gray-200
                             ${!toolbarBottomIsMinimized && defaultToolbarBottomState ? 'hidden' : ''}
                             `}
+                            name='autoseekToggle'
                             onClick={handleClickPause}>
                             {isPaused ? svgPlay : svgPause }</button>
                     </div>

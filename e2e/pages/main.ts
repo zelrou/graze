@@ -109,6 +109,18 @@ export async function openMain(page: Page, extensionId: string) {
       await fontSizeInput.fill(`${newSize}`)
     },
 
+    clickAutoseekToggle: async () => {
+      return page.locator('button[name="autoseekToggle"]').click()
+    },
+
+    getDelayInput: async () => {
+      return page.locator('input[name="delayInput"]')
+    },
+    getDelayInterval: async () => {
+      const delayInput = await mainPage.getDelayInput()
+      const delayInterval = await delayInput.textContent()
+      return parseInt(delayInterval)
+    }
   }
 
   return mainPage
