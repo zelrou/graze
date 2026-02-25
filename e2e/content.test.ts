@@ -158,7 +158,7 @@ test.describe('content script and dependent features', () => {
 
   test.describe('toolbar top', () => {
     test.describe('bookmarks', ()=>{
-      test('location saved after article switch', async ()=>{
+      test('location saved after article switch', async ({}) => {
         const charInterval = 200
         const pageNum = 30
         const nextCharIdx = charInterval * pageNum
@@ -181,7 +181,31 @@ test.describe('content script and dependent features', () => {
         const [loc2, totloc2] = await mainPage.getLocation()
         expect(loc2).toStrictEqual(nextCharIdx)
       })
-      test('clear progress wipes location', ({})=>{})
+
+      test('clear progress wipes location', async ({}) => {
+        const charInterval = 200
+        const pageNum = 30
+        const nextCharIdx = charInterval * pageNum
+        const externalTitle = await externalPage.title()
+        await mainPage.clickReaderButton(externalTitle)
+        await mainPage.fillReaderCharIndexInput(nextCharIdx)
+        await mainPage.clickSubmitLocation()
+        await mainPage.clickSetProgressMark()
+
+        await mainPage.clickReaderNavPrevButton()
+        const [loc1, totLoc1] = await mainPage.getLocation()
+        expect(loc1).toStrictEqual(nextCharIdx - charInterval)
+
+        await mainPage.clickJumpLatestMark()
+        const [loc2, totLoc2] = await mainPage.getLocation()
+        expect(loc2).toStrictEqual(nextCharIdx)
+
+        await mainPage.clickClearMarks()
+        await mainPage.clickJumpLatestMark()
+        const [loc3, totLoc3] = await mainPage.getLocation()
+        expect(loc3).toStrictEqual(0)
+
+      })
     })
     test.describe('search', () => {})
   })
