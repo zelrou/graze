@@ -18,7 +18,8 @@ const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
         <td className='border-b p-2 pl-8 border-gray-300'>{matchStr}</td>
         <td className='border-b p-2 pl-8 border-gray-300 text-right'>{}</td>
         <td className='border-b border-gray-300'>
-            <button className='w-full h-full hover:bg-emerald-500/50'
+            <button className='jump-button w-full h-full hover:bg-emerald-500/50'
+                name={`jumpResult`}
                 onClick={()=>{
                     setLocation(leafEndsRef.current[leafIdx-1] + matchIdx)
                     setIsOpenSearchContainer(false)
@@ -30,7 +31,7 @@ const SearchResultTableRow = ({match, setIsOpenSearchContainer}) => {
 const SearchResultTable = memo(({searchResults, paragraphUrl, setIsOpenSearchContainer}) => {
     const tableRows = searchResults.map(searchResult=>(
         <SearchResultTableRow match={searchResult} setIsOpenSearchContainer={setIsOpenSearchContainer} />))
-    return (<table className='border-separate'>
+    return (<table id='search-results' className='border-separate'>
         <thead><tr><td></td><td></td><td></td></tr></thead>
         <tbody className={'text-sm'}>{tableRows}</tbody>
     </table>)
@@ -124,7 +125,7 @@ export const SearchContainer = ({ charInterval, paragraphUrl, setIsOpenSearchCon
             <input name='query' type='text' minLength={4} maxLength={20}
                 className='bg-zinc-700 pl-1 font-sans focus:outline-2'
                 onChange={handleQueryChange} ref={searchInputRef} autoFocus />
-            <button className='border-2 border-zinc-700 px-3 py-1 hover:border-zinc-400'> Search</button>
+            <button name='submitQuery' className='border-2 border-zinc-700 px-3 py-1 hover:border-zinc-400'> Search</button>
         </form>
         <SearchResultTable searchResults={searchResults} paragraphUrl={paragraphUrl} setIsOpenSearchContainer={setIsOpenSearchContainer}/>
     </>)

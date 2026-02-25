@@ -401,6 +401,7 @@ export default function Reader({
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
                 <div className='flex-row flex-shrink justify-center'>
                     {!isMinimized && <button className='border-1 p-1 rounded-sm border-gray-300/0 hover:border-gray-300/50'
+                        name='openSearch'
                         onClick={handleClickOpenSearchContainer}>
                         { !isOpenSearchContainer ? svgMagnifyingGlass : 'Back' }
                     </button>}

@@ -207,7 +207,31 @@ test.describe('content script and dependent features', () => {
 
       })
     })
-    test.describe('search', () => {})
+
+    test.describe('search', async () => {
+      test('search has correct num of results and jumps', async ({}) => {
+        const query = 'node'
+        const resultLength = 7
+        const resultIdx = 6306
+
+        const externalTitle = await externalPage.title()
+        await mainPage.clickReaderButton(externalTitle)
+
+        await mainPage.clickToggleSearch()
+        await mainPage.fillSearchQuery(query)
+        await mainPage.clickSearch()
+
+        const results = await mainPage.getSearchResults()
+        expect(results.length).toStrictEqual(resultLength)
+
+        const oneResult = results[3]
+        await mainPage.jumpResult(oneResult)
+
+        await mainPage.clickReaderButton(externalTitle)
+        const [loc, totLoc] = await mainPage.getLocation()
+        expect(loc).toStrictEqual(resultIdx)
+      })
+    })
   })
 })
 

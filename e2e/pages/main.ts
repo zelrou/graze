@@ -153,6 +153,36 @@ export async function openMain(page: Page, extensionId: string) {
         .locator('button[name="clearMarks"]')
         .click()
     },
+
+    clickToggleSearch: async () => {
+      return page
+        .locator('button[name="openSearch"]')
+        .click()
+    },
+
+    fillSearchQuery: async (query) => {
+      return page
+        .locator('input[name="query"]')
+        .fill(query)
+    },
+
+    clickSearch: async () => {
+      return page
+        .locator('button[name="submitQuery"]')
+        .click()
+    },
+
+    getSearchResults: async () => {
+      const resultRows = await page
+        .locator('table#search-results > tbody > tr')
+      return resultRows.all()
+    },
+
+    jumpResult: async (result) => {
+      return result
+        .locator('button[name="jumpResult"]')
+        .click()
+    }
   }
 
   return mainPage
