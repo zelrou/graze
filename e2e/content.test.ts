@@ -157,7 +157,32 @@ test.describe('content script and dependent features', () => {
   })
 
   test.describe('toolbar top', () => {
-    test.describe('bookmarks', ()=>{})
+    test.describe('bookmarks', ()=>{
+      test('location saved after article switch', async ()=>{
+        const charInterval = 200
+        const pageNum = 30
+        const nextCharIdx = charInterval * pageNum
+        const externalTitle = await externalPage.title()
+        await mainPage.clickReaderButton(externalTitle)
+        await mainPage.fillReaderCharIndexInput(nextCharIdx)
+        await mainPage.clickSubmitLocation()
+        await mainPage.clickSetProgressMark()
+        await mainPage.clickMinimizeReader()
+
+        const externalTitle2 = await externalPage2.title()
+        await mainPage.clickReaderButton(externalTitle2)
+        await mainPage.clickMinimizeReader()
+
+        await mainPage.clickReaderButton(externalTitle)
+        const [loc, totLoc] = await mainPage.getLocation()
+        expect(loc).toStrictEqual(0)
+
+        await mainPage.clickJumpLatestMark()
+        const [loc2, totloc2] = await mainPage.getLocation()
+        expect(loc2).toStrictEqual(nextCharIdx)
+      })
+      test('clear progress wipes location', ({})=>{})
+    })
     test.describe('search', () => {})
   })
 })

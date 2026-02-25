@@ -116,11 +116,43 @@ export async function openMain(page: Page, extensionId: string) {
     getDelayInput: async () => {
       return page.locator('input[name="delayInput"]')
     },
+
     getDelayInterval: async () => {
       const delayInput = await mainPage.getDelayInput()
       const delayInterval = await delayInput.textContent()
       return parseInt(delayInterval)
-    }
+    },
+
+    getLocation: async () => {
+      const progressbar = await mainPage
+        .getReaderProgressBar()
+      const locStr = await progressbar.textContent()
+      return locStr.split('/').map(s => parseInt(s))
+    },
+
+    clickMinimizeReader: async () => {
+      return page
+        .locator('button[name="minimizeReader"]')
+        .click()
+    },
+
+    clickSetProgressMark: async () => {
+      return page
+        .locator('button[name="setProgressMark"]')
+        .click()
+    },
+
+    clickJumpLatestMark: async () => {
+      return page
+        .locator('button[name="jumpLatestMark"]')
+        .click()
+    },
+
+    clickClearMarks: async () => {
+      return page
+        .locator('button[name="clearMarks"]')
+        .click()
+    },
   }
 
   return mainPage
