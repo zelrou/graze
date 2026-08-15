@@ -9,6 +9,14 @@ export default defineConfig({
     name: 'Graze',
     description: 'Read websites in a minimal, customizable environment.',
     version: '0.1.0',
-    permissions: [ 'storage', 'tabs' ]
+    permissions: [ 'storage', 'tabs' ],
+    browser_specific_settings: {
+      gecko:{
+        id: "@extension-without-data-collection",
+        data_collection_permissions: {
+          required: ["none"]
+        }
+      }
+    }
   }
 });
