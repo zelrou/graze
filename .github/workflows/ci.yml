@@ -10,21 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
-      - uses: pnpm/action-setup/@v4
+      - uses: pnpm/setup/@v1
         name: Install pnpm
         with:
-          version: 10
-          run_install: false
-
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: 'pnpm'
+          version: 11
+          install: false
+          runtime: node@22
+          cache: true
 
       - name: Install dependencies
         run: pnpm install
@@ -36,4 +32,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: graze-firefox
-          path: dist_firefox
+          path: .output/firefox-mv2
