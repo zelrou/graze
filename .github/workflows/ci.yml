@@ -14,14 +14,16 @@ jobs:
         with:
           fetch-depth: 2
 
-      - uses: pnpm/setup/@v1
-        name: Install pnpm
+      - uses: pnpm/action-setup@v6
         with:
-          version: 11
-          install: false
-          runtime: node@22
+          version: 10.19.0
           cache: true
+          run_install: false
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      
       - name: Install dependencies
         run: pnpm install
 
