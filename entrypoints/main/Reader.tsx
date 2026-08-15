@@ -401,6 +401,7 @@ export default function Reader({
                 {/* ---------- OPEN SEARCH CONTAINER ---------- */}
                 <div className='flex-row flex-shrink justify-center'>
                     {!isMinimized && <button className='border-1 p-1 rounded-sm border-gray-300/0 hover:border-gray-300/50'
+                        name='openSearch'
                         onClick={handleClickOpenSearchContainer}>
                         { !isOpenSearchContainer ? svgMagnifyingGlass : 'Back' }
                     </button>}
@@ -422,6 +423,7 @@ export default function Reader({
                     <div className=''>
                         {paragraphUrl &&
                         <button className='border-1 p-1 rounded-sm border-gray-300/0 hover:border-gray-300/50'
+                            name="minimizeReader"
                             onClick={ () => (paragraphUrl.length
                                         && handleClickMinimize()) }>
                             {!isMinimized ? svgChevronDown : svgChevronUp}
@@ -456,12 +458,15 @@ export default function Reader({
                     border border-gray-300/50 divide-solid divide-x-6
                     divide-gray-400 mb-2 sm:mb-4 w-full flex flex-row text-xs`}>
                     <button className='grow basis-md p-1 hover:bg-yellow-500/50'
+                        name="clearMarks"
                         onClick={handleClickClearBookmarks} >
                         Clear Progress</button>
                     <button className='grow basis-md p-1 hover:bg-green-500/50'
+                        name="jumpLatestMark"
                         onClick={handleClickGetBookmarkLatest} >
                         Go Latest</button>
                     <button className='grow basis-md p-1 hover:bg-fuchsia-500/50'
+                        name="setProgressMark"
                         onClick={handleClickSetBookmarkLatest} >
                         Set Progress</button>
                 </div>
@@ -567,6 +572,7 @@ export default function Reader({
                             dark:text-gray-200
                             ${!toolbarBottomIsMinimized && defaultToolbarBottomState ? 'hidden' : ''}
                             `}
+                            name='autoseekToggle'
                             onClick={handleClickPause}>
                             {isPaused ? svgPlay : svgPause }</button>
                     </div>
