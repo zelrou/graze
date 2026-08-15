@@ -12,7 +12,6 @@ export default defineConfig({
     permissions: [ 'storage', 'tabs' ],
     browser_specific_settings: {
       gecko:{
-        id: "@extension-without-data-collection",
         data_collection_permissions: {
           required: ["none"]
         }
